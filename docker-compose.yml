@@ -1,0 +1,83 @@
+version: "3"
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - 8080:8080
+      - 80:80
+      - 1935:1935
+    network_mode: host
+    restart: on-failure
+
+  proto:
+    build: ./proto
+    ports:
+      - 8080:8080
+      - 80:80
+      - 1935:1935
+    network_mode: host
+    restart: on-failure
+
+  # poll:
+  #   build: ./poll
+  #   ports:
+  #     - "5000:80"
+  #   depends_on:
+  #     redis:
+  #       condition: service_started
+  #   networks:
+  #     - poll-tier
+  #   restart: on-failure
+  #   environment:
+  #     - REDIS_HOST=redis
+
+  # worker:
+  #   build: ./worker
+  #   depends_on:
+  #     db:
+  #       condition: service_started
+  #     redis:
+  #       condition: service_started
+  #   networks:
+  #     - back-tier
+  #   restart: on-failure
+  #   environment:
+  #     - ADDR_DOCKER=127.0.0.1
+
+  # result:
+  #   build: ./result
+  #   ports:
+  #     - "5001:80"
+  #   depends_on:
+  #     db:
+  #       condition: service_started
+  #   networks:
+  #     - result-tier
+  #   environment:
+  #     - DB_HOST=db
+  #   restart: on-failure
+
+  # redis:
+  #   image: "redis"
+  #   ports:
+  #     - "6379"
+  #   networks:
+  #     - back-tier
+  #     - poll-tier
+  #   restart: on-failure
+
+  # db:
+  #   image: "postgres"
+  #   ports:
+  #     - 5432:5432
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data/
+  #   networks:
+  #     - result-tier
+  #     - back-tier
+  #   environment:
+  #     POSTGRES_DB: default_database
+  #     POSTGRES_PASSWORD: 123
+  #     POSTGRES_HOST_AUTH_METHOD: trust
+  #   restart: on-failure
