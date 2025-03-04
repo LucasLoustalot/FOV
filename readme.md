@@ -85,7 +85,7 @@ sudo apt install obs-cli
 
 start http-server:
 ```
-sudo apt install http-server
+sudo npm install -g http-server
 cd proto/
 http-server
 ```
