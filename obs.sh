@@ -16,14 +16,15 @@ OBS_SCENE="Scene"
 start_obs() {
     local profile_name=$1
     local instance_name=$2
+    local scene_name=$3
     
     echo "Starting OBS instance: $instance_name"
-    obs-studio --profile "$profile_name" --scene "$OBS_SCENE" &
+    obs-studio --profile "$profile_name" --scene "$scene_name" &
 }
 
 # Start both OBS instances
-start_obs "$OBS_PROFILE_1" "OBS Instance 1"
-start_obs "$OBS_PROFILE_2" "OBS Instance 2"
+start_obs "$OBS_PROFILE_1" "OBS Instance 1" "video"
+start_obs "$OBS_PROFILE_2" "OBS Instance 2" "camera"
 
 echo "Waiting for OBS instances to fully launch..."
 
