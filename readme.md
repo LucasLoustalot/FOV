@@ -83,6 +83,13 @@ obs-cli:
 sudo apt install obs-cli
 ```
 
+start http-server:
+```
+sudo apt install http-server
+cd proto/
+http-server
+```
+
 and then start obs, with the custom settings in obs.sh
 ```
 ./obs.sh
