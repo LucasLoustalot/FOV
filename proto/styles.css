@@ -1,91 +1,93 @@
-/* General body styles */
 body {
-    font-family: "Arial", sans-serif;
-    text-align: center;
-    background-color: #1c1c1c; /* Dark background */
-    color: white;
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #0E0E10;
+    color: #EFEFF1;
     margin: 0;
-    padding: 0;
-}
-
-h1 {
-    color: #9146ff; /* Twitch purple */
-    font-size: 2em;
     padding: 20px;
 }
 
-/* Video container (player box) */
+h1 {
+    color: #9147FF;
+    font-weight: bold;
+    margin-bottom: 30px;
+    text-shadow: 0 2px 4px rgba(145, 71, 255, 0.3);
+}
+
 .video-container {
     position: absolute;
     cursor: grab;
     display: inline-block;
     overflow: hidden;
-    background: #000;
+    background: #1F1F23;
+    border: 2px solid #353535;
     border-radius: 10px;
-    padding: 5px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease;
     z-index: 1;
-    border: 2px solid #9146ff; /* Twitch purple border */
-    transition: all 0.3s ease-in-out; /* Smooth transitions */
 }
 
 .video-container:hover {
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8); /* Larger shadow on hover */
+    border-color: #9147FF;
 }
 
-/* Video player */
+.video-container:active {
+    cursor: grabbing;
+}
+
 .video-js {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Crop video to fit container */
-    border-radius: 5px;
+    min-height: 120px;
+    min-width: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-/* Resize handle */
 .resize-handle {
-    width: 20px;
-    height: 20px;
-    background: #9146ff;
+    width: 15px;
+    height: 15px;
+    background: #9147FF;
     position: absolute;
     bottom: 0;
     right: 0;
     cursor: se-resize;
     z-index: 10;
-    border-radius: 50%; /* Round resize handle */
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    border-radius: 0 0 8px 0;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
 }
 
-/* Controls styling */
+.resize-handle:hover {
+    opacity: 1;
+}
+
+/* Twitch-like video controls customization */
 .video-js .vjs-control-bar {
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent control bar */
-    border-radius: 0 0 10px 10px;
+    background-color: rgba(31, 31, 35, 0.9);
+    border-radius: 0 0 8px 8px;
 }
 
-/* Play/Pause button */
-.video-js .vjs-play-control {
-    color: white;
+.video-js .vjs-button > .vjs-icon-placeholder:before {
+    color: #EFEFF1;
 }
 
-/* Volume button */
-.video-js .vjs-volume-control {
-    color: white;
+.video-js .vjs-play-control .vjs-icon-placeholder:before {
+    content: "\f103";
 }
 
-/* Fullscreen button */
-.video-js .vjs-fullscreen-control {
-    color: white;
+.video-js .vjs-volume-panel {
+    color: #EFEFF1;
 }
 
-/* Make sure the page looks good on mobile */
-@media screen and (max-width: 768px) {
-    .video-container {
-        width: 100%;
-        height: 100%;
-        position: relative;
-    }
+.video-js .vjs-slider {
+    background-color: #53535F;
+}
 
-    .video-js {
-        width: 100%;
-        height: 100%;
-    }
+.video-js .vjs-volume-level {
+    background-color: #9147FF;
+}
+
+.video-js .vjs-play-progress {
+    background-color: #9147FF;
 }
