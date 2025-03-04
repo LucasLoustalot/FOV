@@ -212,18 +212,22 @@ document.addEventListener("DOMContentLoaded", () => {
             streamPanel.style.display = "block";
 
             document.querySelectorAll(".video-container").forEach((el) => {
+                const resizeHandle = el.querySelector(".resize-handle");
                 el.classList.add("draggable-video");
                 el.style.pointerEvents = "auto"; // Allow moving/resizing
                 el.setAttribute("draggable", "true"); // Enable dragging
+                resizeHandle.style.display = "block"; // Show resize handle
             });
         } else {
             editButton.textContent = "EDIT";
             streamPanel.style.display = "none";
 
             document.querySelectorAll(".video-container").forEach((el) => {
+                const resizeHandle = el.querySelector(".resize-handle");
                 el.classList.remove("draggable-video");
                 el.style.pointerEvents = "none"; // Lock layout
                 el.setAttribute("draggable", "false"); // Disable dragging
+                resizeHandle.style.display = "none"; // Hide resize handle
             });
         }
     }
