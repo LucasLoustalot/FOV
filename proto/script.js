@@ -118,15 +118,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
     let zIndexCounter = 1000;
+    let editMode = false;
+    const editButton = document.getElementById("editButton");
+    const streamPanel = document.getElementById("streamPanel");
     const streams = [
-        { id: "videoWrapper1", name: "Source 1" },
-        { id: "videoWrapper2", name: "Source 2" },
+        { id: "videoWrapper1", name: "Stream 1" },
+        { id: "videoWrapper2", name: "Stream 2" },
     ];
 
     const streamList = document.getElementById("streamList");
 
     function updateZIndexes() {
-        // Assign higher z-index to the first item in the list
         Array.from(streamList.children)
             .reverse()
             .forEach((li, index) => {
@@ -144,12 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
         li.dataset.streamId = stream.id;
         li.draggable = true;
 
-        // Drag handle
         const dragHandle = document.createElement("span");
         dragHandle.classList.add("drag-handle");
         dragHandle.innerHTML = "☰";
 
-        // Stream name
         const nameSpan = document.createElement("span");
         nameSpan.textContent = stream.name;
 
@@ -158,7 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
         streamList.appendChild(li);
     }
 
-    // Initialize draggable list
     function makeListDraggable() {
         let draggedItem = null;
 
@@ -202,7 +201,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Create stream list
     streams.forEach(createStreamItem);
     makeListDraggable();
+
+    function toggleEditMode() {
+        editMode = !editMode;
+
+        if (editMode) {
+            editButton.textContent = "SAVE";
+            streamPanel.style.display = "block";
+
+            document.querySelectorAll(".video-container").forEach((el) => {
+                el.classList.add("draggable-video");
+                el.style.pointerEvents = "auto"; // Allow moving/resizing
+                el.setAttribute("draggable", "true"); // Enable dragging
+            });
+        } else {
+            editButton.textContent = "EDIT";
+            streamPanel.style.display = "none";
+
+            document.querySelectorAll(".video-container").forEach((el) => {
+                el.classList.remove("draggable-video");
+                el.style.pointerEvents = "none"; // Lock layout
+                el.setAttribute("draggable", "false"); // Disable dragging
+            });
+        }
+    }
+
+    // Ensure that streams are locked by default when loading the page
+    document.querySelectorAll(".video-container").forEach((el) => {
+        el.style.pointerEvents = "none"; // Disable interactions
+        el.setAttribute("draggable", "false"); // Disable dragging
+    });
+
+    editButton.addEventListener("click", toggleEditMode);
 });
