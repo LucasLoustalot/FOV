@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Multi-Stream Page with Video.js</title>
+        <!-- Include Video.js CSS -->
+        <link
+            href="https://vjs.zencdn.net/7.20.3/video-js.css"
+            rel="stylesheet"
+        />
+        <style>
+            .video-container {
+                display: flex;
+                justify-content: space-around;
+                margin-top: 20px;
+            }
+            .video-js {
+                width: 640px;
+                height: 360px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Multi-Stream Page with Video.js</h1>
+
+        <div class="video-container">
+            <!-- First Stream -->
+            <div>
+                <h2>Stream 1</h2>
+                <video
+                    id="videoElement1"
+                    class="video-js vjs-default-skin"
+                    controls
+                    autoplay
+                ></video>
+            </div>
+
+            <!-- Second Stream -->
+            <div>
+                <h2>Stream 2</h2>
+                <video
+                    id="videoElement2"
+                    class="video-js vjs-default-skin"
+                    controls
+                    autoplay
+                ></video>
+            </div>
+        </div>
+
+        <!-- Include Video.js and hls.js -->
+        <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
