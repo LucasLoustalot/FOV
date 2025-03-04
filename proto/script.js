@@ -54,10 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
             offsetY = event.clientY - element.getBoundingClientRect().top;
             element.style.cursor = "grabbing";
 
-            // Bring clicked element to the front
-            zIndexCounter++;
-            element.style.zIndex = zIndexCounter;
-
             // Prevent pausing when dragging
             event.preventDefault();
         });
@@ -118,4 +114,95 @@ document.addEventListener("DOMContentLoaded", () => {
     makeDraggable(video2);
     makeResizable(video1);
     makeResizable(video2);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    let zIndexCounter = 1000;
+    const streams = [
+        { id: "videoWrapper1", name: "Source 1" },
+        { id: "videoWrapper2", name: "Source 2" },
+    ];
+
+    const streamList = document.getElementById("streamList");
+
+    function updateZIndexes() {
+        // Assign higher z-index to the first item in the list
+        Array.from(streamList.children)
+            .reverse()
+            .forEach((li, index) => {
+                const streamId = li.dataset.streamId;
+                const streamElement = document.getElementById(streamId);
+                if (streamElement) {
+                    streamElement.style.zIndex = zIndexCounter + index;
+                }
+            });
+    }
+
+    function createStreamItem(stream) {
+        const li = document.createElement("li");
+        li.classList.add("stream-item");
+        li.dataset.streamId = stream.id;
+        li.draggable = true;
+
+        // Drag handle
+        const dragHandle = document.createElement("span");
+        dragHandle.classList.add("drag-handle");
+        dragHandle.innerHTML = "☰";
+
+        // Stream name
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = stream.name;
+
+        li.appendChild(dragHandle);
+        li.appendChild(nameSpan);
+        streamList.appendChild(li);
+    }
+
+    // Initialize draggable list
+    function makeListDraggable() {
+        let draggedItem = null;
+
+        streamList.addEventListener("dragstart", (e) => {
+            draggedItem = e.target;
+            setTimeout(() => (draggedItem.style.opacity = "0.5"), 0);
+        });
+
+        streamList.addEventListener("dragend", () => {
+            draggedItem.style.opacity = "1";
+            updateZIndexes();
+        });
+
+        streamList.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(streamList, e.clientY);
+            if (afterElement == null) {
+                streamList.appendChild(draggedItem);
+            } else {
+                streamList.insertBefore(draggedItem, afterElement);
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [
+                ...container.querySelectorAll(".stream-item:not(.dragging)"),
+            ];
+
+            return draggableElements.reduce(
+                (closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                },
+                { offset: Number.NEGATIVE_INFINITY }
+            ).element;
+        }
+    }
+
+    // Create stream list
+    streams.forEach(createStreamItem);
+    makeListDraggable();
 });

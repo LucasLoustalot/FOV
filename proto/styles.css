@@ -1,13 +1,13 @@
 body {
-    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    background-color: #0E0E10;
-    color: #EFEFF1;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: #0e0e10;
+    color: #efeff1;
     margin: 0;
     padding: 20px;
 }
 
 h1 {
-    color: #9147FF;
+    color: #9147ff;
     font-weight: bold;
     margin-bottom: 30px;
     text-shadow: 0 2px 4px rgba(145, 71, 255, 0.3);
@@ -18,7 +18,7 @@ h1 {
     cursor: grab;
     display: inline-block;
     overflow: hidden;
-    background: #1F1F23;
+    background: #1f1f23;
     border: 2px solid #353535;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -27,7 +27,7 @@ h1 {
 }
 
 .video-container:hover {
-    border-color: #9147FF;
+    border-color: #9147ff;
 }
 
 .video-container:active {
@@ -47,7 +47,7 @@ h1 {
 .resize-handle {
     width: 15px;
     height: 15px;
-    background: #9147FF;
+    background: #9147ff;
     position: absolute;
     bottom: 0;
     right: 0;
@@ -69,7 +69,7 @@ h1 {
 }
 
 .video-js .vjs-button > .vjs-icon-placeholder:before {
-    color: #EFEFF1;
+    color: #efeff1;
 }
 
 .video-js .vjs-play-control .vjs-icon-placeholder:before {
@@ -77,17 +77,70 @@ h1 {
 }
 
 .video-js .vjs-volume-panel {
-    color: #EFEFF1;
+    color: #efeff1;
 }
 
 .video-js .vjs-slider {
-    background-color: #53535F;
+    background-color: #53535f;
 }
 
 .video-js .vjs-volume-level {
-    background-color: #9147FF;
+    background-color: #9147ff;
 }
 
 .video-js .vjs-play-progress {
-    background-color: #9147FF;
+    background-color: #9147ff;
+}
+
+/* Right-side panel */
+#streamPanel {
+    position: fixed;
+    right: 10px;
+    top: 50px;
+    width: 180px;
+    background-color: #18181b; /* Twitch dark theme */
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #9146ff; /* Twitch purple */
+    box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.5);
+    font-size: 0.9em;
+}
+
+/* List inside the panel */
+#streamPanel h2 {
+    text-align: center;
+    color: #9146ff;
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+
+#streamList {
+    list-style-type: none;
+    padding: 0;
+}
+
+/* Draggable list items */
+.stream-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #262626;
+    padding: 8px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    font-size: 0.9em;
+    cursor: grab;
+}
+
+.stream-item:active {
+    cursor: grabbing;
+}
+
+.drag-handle {
+    cursor: grab;
+    font-size: 1.2em;
+    padding-right: 10px;
+    color: #9146ff;
 }

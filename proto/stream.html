@@ -11,7 +11,7 @@
         <link rel="stylesheet" href="styles.css" />
     </head>
     <body>
-        <h1>Multi-Stream Page with Video.js</h1>
+        <h1>FOV - Flexible Output View</h1>
 
         <div class="video-container draggable-video" id="videoWrapper1">
             <video
@@ -31,6 +31,11 @@
                 autoplay
             ></video>
             <div class="resize-handle"></div>
+        </div>
+
+        <div id="streamPanel">
+            <h2>Sources</h2>
+            <ul id="streamList"></ul>
         </div>
 
         <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
