@@ -1,3 +1,8 @@
+Install Nginx :
+```
+sudo apt install nginx libnginx-mod-rtmp
+```
+
 nginx.conf (/etc/nginx/nginx.conf):
 
 ```
