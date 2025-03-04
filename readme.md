@@ -95,6 +95,15 @@ cd proto/
 http-server
 ```
 
+Set up OBS
+The stream key will be used to separate the different stream as you can se on the nginx conf
+```
+# Define stream keys
+hls_variant _stream1 BANDWIDTH=1000000; # Stream 1
+hls_variant _stream2 BANDWIDTH=1000000; # Stream 2
+```
+![Stream settings](https://i.imgur.com/VqlS9Lh.png "OBS")
+
 and then start obs, with the custom settings in obs.sh
 ```
 ./obs.sh
