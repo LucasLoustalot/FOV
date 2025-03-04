@@ -1,4 +1,3 @@
-// Initialize HLS players and keep references
 const hlsPlayers = {};
 
 function initializePlayer(videoElementId, streamUrl) {
@@ -7,56 +6,69 @@ function initializePlayer(videoElementId, streamUrl) {
     if (Hls.isSupported()) {
         const hls = new Hls({
             liveDurationInfinity: true,
-            liveBackBufferLength: 0,
-            liveSyncDuration: 0.5,
-            liveMaxLatencyDuration: 5,
-            highBufferWatchdogPeriod: 1,
-            nudgeMaxRetry: 10,
-            maxBufferLength: 10,
-            maxMaxBufferLength: 10,
-            maxBufferSize: 20 * 1000 * 1000, // 20MB
-            maxBufferHole: 0.1
+            liveBackBufferLength: 60,
+            liveSyncDuration: 10,
+            liveMaxLatencyDuration: 15,
+            maxBufferLength: 60,
+            maxMaxBufferLength: 60,
+            highBufferWatchdogPeriod: 5,
+            nudgeMaxRetry: 5,
+            startLevel: -1,
+            startPosition: -1,
+            fragLoadingMaxRetry: 8,
+            manifestLoadingMaxRetry: 8,
+            debug: false
         });
         
         hls.loadSource(streamUrl);
         hls.attachMedia(videoElement);
         
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            videoElement.play();
-        });
-        
-        // Force seeking to live edge whenever possible
-        hls.on(Hls.Events.LEVEL_LOADED, function() {
-            if (hls.liveSyncPosition) {
-                videoElement.currentTime = hls.liveSyncPosition;
+            videoElement.play().catch(e => console.error('Play failed:', e));
+            console.log(`Playback started for ${videoElementId}`);
+            
+            console.log(`Stream levels:`, hls.levels);
+            if (hls.levels && hls.levels.length > 0) {
+                console.log(`Fragment duration:`, hls.levels[0].details?.fragments[0]?.duration || 'unknown');
             }
         });
         
-        // Set up periodic live edge sync (every 5 seconds)
-        setInterval(() => {
-            if (hls.liveSyncPosition) {
-                videoElement.currentTime = hls.liveSyncPosition;
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            console.log(`HLS error:`, data.type, data.details);
+            if (data.fatal) {
+                switch(data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log(`Network error, trying to recover for ${videoElementId}`);
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log(`Media error, trying to recover for ${videoElementId}`);
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        console.error(`Fatal error, destroying HLS for ${videoElementId}`, data);
+                        hls.destroy();
+                        break;
+                }
             }
-        }, 5000);
+        });
         
-        // Store the HLS instance
         hlsPlayers[videoElementId] = hls;
+        
+        videoElement.addEventListener('pause', function() {
+            videoElement.play().catch(e => console.error('Play failed after pause:', e));
+        });
         
         return hls;
     } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
-        // For Safari
         videoElement.src = streamUrl;
+        
         videoElement.addEventListener('loadedmetadata', function() {
-            videoElement.play();
+            videoElement.play().catch(e => console.error('Safari play failed:', e));
         });
         
-        // Safari doesn't support HLS.js, so we need a different approach
-        // to keep it at the live edge
-        videoElement.addEventListener('timeupdate', function() {
-            // If we're more than 5 seconds behind live, try to catch up
-            if (videoElement.duration - videoElement.currentTime > 5) {
-                videoElement.currentTime = videoElement.duration - 1;
-            }
+        videoElement.addEventListener('pause', function() {
+            videoElement.play().catch(e => console.error('Safari play failed after pause:', e));
         });
         
         return null;
@@ -66,7 +78,6 @@ function initializePlayer(videoElementId, streamUrl) {
     }
 }
 
-// Initialize players
 document.addEventListener("DOMContentLoaded", () => {
     const player1 = initializePlayer(
         "videoElement1",
@@ -103,7 +114,6 @@ function setupDraggableResizable() {
             element.style.cursor = "grabbing";
             element.style.zIndex = ++zIndexCounter;
 
-            // Prevent pausing when dragging
             event.preventDefault();
         });
 
@@ -131,7 +141,6 @@ function setupDraggableResizable() {
             isResizing = true;
             event.preventDefault();
             
-            // Default to 16:9 if video dimensions aren't available yet
             aspectRatio = 16/9;
             if (video.videoWidth && video.videoHeight) {
                 aspectRatio = video.videoWidth / video.videoHeight;
@@ -199,65 +208,80 @@ function setupStreamPanel() {
         const li = document.createElement("li");
         li.classList.add("stream-item");
         li.dataset.streamId = stream.id;
-        li.draggable = true;
-
-        const dragHandle = document.createElement("span");
-        dragHandle.classList.add("drag-handle");
-        dragHandle.innerHTML = "☰";
-
+        
         const nameSpan = document.createElement("span");
         nameSpan.textContent = stream.name;
-
-        li.appendChild(dragHandle);
+        nameSpan.classList.add("stream-name");
+        
+        const arrowsContainer = document.createElement("div");
+        arrowsContainer.classList.add("arrows-container");
+        
+        const upArrow = document.createElement("button");
+        upArrow.innerHTML = "&#9650;";
+        upArrow.classList.add("arrow-btn", "up-arrow");
+        upArrow.title = "Move up";
+        upArrow.addEventListener("click", () => moveStreamUp(li));
+        
+        const downArrow = document.createElement("button");
+        downArrow.innerHTML = "&#9660;";
+        downArrow.classList.add("arrow-btn", "down-arrow");
+        downArrow.title = "Move down";
+        downArrow.addEventListener("click", () => moveStreamDown(li));
+        
+        arrowsContainer.appendChild(upArrow);
+        arrowsContainer.appendChild(downArrow);
+        
         li.appendChild(nameSpan);
+        li.appendChild(arrowsContainer);
         streamList.appendChild(li);
     }
 
-    function makeListDraggable() {
-        let draggedItem = null;
-
-        streamList.addEventListener("dragstart", (e) => {
-            draggedItem = e.target;
-            setTimeout(() => (draggedItem.style.opacity = "0.5"), 0);
-        });
-
-        streamList.addEventListener("dragend", () => {
-            draggedItem.style.opacity = "1";
+    function moveStreamUp(streamItem) {
+        const prevItem = streamItem.previousElementSibling;
+        if (prevItem) {
+            streamList.insertBefore(streamItem, prevItem);
+            updateArrowVisibility();
             updateZIndexes();
-        });
-
-        streamList.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            const afterElement = getDragAfterElement(streamList, e.clientY);
-            if (afterElement == null) {
-                streamList.appendChild(draggedItem);
-            } else {
-                streamList.insertBefore(draggedItem, afterElement);
-            }
-        });
-
-        function getDragAfterElement(container, y) {
-            const draggableElements = [
-                ...container.querySelectorAll(".stream-item:not(.dragging)"),
-            ];
-
-            return draggableElements.reduce(
-                (closest, child) => {
-                    const box = child.getBoundingClientRect();
-                    const offset = y - box.top - box.height / 2;
-                    if (offset < 0 && offset > closest.offset) {
-                        return { offset, element: child };
-                    } else {
-                        return closest;
-                    }
-                },
-                { offset: Number.NEGATIVE_INFINITY }
-            ).element;
         }
     }
 
+    function moveStreamDown(streamItem) {
+        const nextItem = streamItem.nextElementSibling;
+        if (nextItem) {
+            streamList.insertBefore(nextItem, streamItem);
+            updateArrowVisibility();
+            updateZIndexes();
+        }
+    }
+
+    function updateArrowVisibility() {
+        const items = Array.from(streamList.children);
+        
+        items.forEach((item, index) => {
+            const upArrow = item.querySelector('.up-arrow');
+            const downArrow = item.querySelector('.down-arrow');
+            
+            if (index === 0) {
+                upArrow.disabled = true;
+                upArrow.classList.add('disabled');
+            } else {
+                upArrow.disabled = false;
+                upArrow.classList.remove('disabled');
+            }
+            
+            if (index === items.length - 1) {
+                downArrow.disabled = true;
+                downArrow.classList.add('disabled');
+            } else {
+                downArrow.disabled = false;
+                downArrow.classList.remove('disabled');
+            }
+        });
+    }
+
     streams.forEach(createStreamItem);
-    makeListDraggable();
+    updateArrowVisibility();
+    updateZIndexes();
 
     function toggleEditMode() {
         editMode = !editMode;
@@ -269,9 +293,9 @@ function setupStreamPanel() {
             document.querySelectorAll(".video-container").forEach((el) => {
                 const resizeHandle = el.querySelector(".resize-handle");
                 el.classList.add("draggable-video");
-                el.style.pointerEvents = "auto"; // Allow moving/resizing
-                el.setAttribute("draggable", "true"); // Enable dragging
-                resizeHandle.style.display = "block"; // Show resize handle
+                el.style.pointerEvents = "auto";
+                el.setAttribute("draggable", "true");
+                resizeHandle.style.display = "block";
             });
         } else {
             editButton.textContent = "EDIT";
@@ -280,19 +304,18 @@ function setupStreamPanel() {
             document.querySelectorAll(".video-container").forEach((el) => {
                 const resizeHandle = el.querySelector(".resize-handle");
                 el.classList.remove("draggable-video");
-                el.style.pointerEvents = "none"; // Lock layout
-                el.setAttribute("draggable", "false"); // Disable dragging
-                resizeHandle.style.display = "none"; // Hide resize handle
+                el.style.pointerEvents = "none";
+                el.setAttribute("draggable", "false");
+                resizeHandle.style.display = "none";
             });
         }
     }
 
-    // Ensure that streams are locked by default when loading the page
     document.querySelectorAll(".video-container").forEach((el) => {
-        el.style.pointerEvents = "none"; // Disable interactions
-        el.setAttribute("draggable", "false"); // Disable dragging
+        el.style.pointerEvents = "none";
+        el.setAttribute("draggable", "false");
         const resizeHandle = el.querySelector(".resize-handle");
-        resizeHandle.style.display = "none"; // Hide resize handle
+        resizeHandle.style.display = "none";
     });
 
     editButton.addEventListener("click", toggleEditMode);
