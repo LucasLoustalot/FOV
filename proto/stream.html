@@ -3,33 +3,21 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Multi-Stream Page with Video.js</title>
-        <link
-            rel="stylesheet"
-            href="https://vjs.zencdn.net/7.20.3/video-js.css"
-        />
+        <title>Multi-Stream Page with HLS.js</title>
         <link rel="stylesheet" href="styles.css" />
     </head>
     <body>
         <h1>FOV - Flexible Output View</h1>
 
         <div class="video-container draggable-video" id="videoWrapper1">
-            <video
-                id="videoElement1"
-                class="video-js vjs-default-skin"
-                controls
-                autoplay
-            ></video>
+            <div class="live-indicator">LIVE</div>
+            <video id="videoElement1" controls autoplay></video>
             <div class="resize-handle"></div>
         </div>
 
         <div class="video-container draggable-video" id="videoWrapper2">
-            <video
-                id="videoElement2"
-                class="video-js vjs-default-skin"
-                controls
-                autoplay
-            ></video>
+            <div class="live-indicator">LIVE</div>
+            <video id="videoElement2" controls autoplay></video>
             <div class="resize-handle"></div>
         </div>
 
@@ -40,7 +28,6 @@
             <ul id="streamList"></ul>
         </div>
 
-        <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
         <script src="script.js"></script>
     </body>

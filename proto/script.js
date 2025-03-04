@@ -1,40 +1,88 @@
+// Initialize HLS players and keep references
+const hlsPlayers = {};
+
 function initializePlayer(videoElementId, streamUrl) {
     const videoElement = document.getElementById(videoElementId);
-
-    if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
-        videoElement.src = streamUrl;
-        videoElement.play();
-    } else if (Hls.isSupported()) {
-        const hls = new Hls();
+    
+    if (Hls.isSupported()) {
+        const hls = new Hls({
+            liveDurationInfinity: true,
+            liveBackBufferLength: 0,
+            liveSyncDuration: 0.5,
+            liveMaxLatencyDuration: 5,
+            highBufferWatchdogPeriod: 1,
+            nudgeMaxRetry: 10,
+            maxBufferLength: 10,
+            maxMaxBufferLength: 10,
+            maxBufferSize: 20 * 1000 * 1000, // 20MB
+            maxBufferHole: 0.1
+        });
+        
         hls.loadSource(streamUrl);
         hls.attachMedia(videoElement);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
             videoElement.play();
         });
+        
+        // Force seeking to live edge whenever possible
+        hls.on(Hls.Events.LEVEL_LOADED, function() {
+            if (hls.liveSyncPosition) {
+                videoElement.currentTime = hls.liveSyncPosition;
+            }
+        });
+        
+        // Set up periodic live edge sync (every 5 seconds)
+        setInterval(() => {
+            if (hls.liveSyncPosition) {
+                videoElement.currentTime = hls.liveSyncPosition;
+            }
+        }, 5000);
+        
+        // Store the HLS instance
+        hlsPlayers[videoElementId] = hls;
+        
+        return hls;
+    } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
+        // For Safari
+        videoElement.src = streamUrl;
+        videoElement.addEventListener('loadedmetadata', function() {
+            videoElement.play();
+        });
+        
+        // Safari doesn't support HLS.js, so we need a different approach
+        // to keep it at the live edge
+        videoElement.addEventListener('timeupdate', function() {
+            // If we're more than 5 seconds behind live, try to catch up
+            if (videoElement.duration - videoElement.currentTime > 5) {
+                videoElement.currentTime = videoElement.duration - 1;
+            }
+        });
+        
+        return null;
     } else {
-        alert("HLS playback is not supported in your browser.");
+        console.error("HLS playback is not supported in your browser.");
+        return null;
     }
-
-    const player = videojs(videoElementId, {
-        autoplay: true,
-        preload: "auto",
-        liveui: true,
-    });
-
-    return player;
 }
 
 // Initialize players
-const player1 = initializePlayer(
-    "videoElement1",
-    "http://localhost:8080/hls/stream1.m3u8"
-);
-const player2 = initializePlayer(
-    "videoElement2",
-    "http://localhost:8080/hls/stream2.m3u8"
-);
-
 document.addEventListener("DOMContentLoaded", () => {
+    const player1 = initializePlayer(
+        "videoElement1",
+        "http://localhost:8080/hls/stream1.m3u8"
+    );
+    
+    const player2 = initializePlayer(
+        "videoElement2",
+        "http://localhost:8080/hls/stream2.m3u8"
+    );
+    
+    setupDraggableResizable();
+    setupStreamPanel();
+});
+
+function setupDraggableResizable() {
     let zIndexCounter = 1000;
 
     function makeDraggable(element) {
@@ -53,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
             offsetX = event.clientX - element.getBoundingClientRect().left;
             offsetY = event.clientY - element.getBoundingClientRect().top;
             element.style.cursor = "grabbing";
+            element.style.zIndex = ++zIndexCounter;
 
             // Prevent pausing when dragging
             event.preventDefault();
@@ -81,8 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
         resizeHandle.addEventListener("mousedown", (event) => {
             isResizing = true;
             event.preventDefault();
-            const rect = element.getBoundingClientRect();
-            aspectRatio = video.videoWidth / video.videoHeight;
+            
+            // Default to 16:9 if video dimensions aren't available yet
+            aspectRatio = 16/9;
+            if (video.videoWidth && video.videoHeight) {
+                aspectRatio = video.videoWidth / video.videoHeight;
+            }
+            
+            element.style.zIndex = ++zIndexCounter;
         });
 
         document.addEventListener("mousemove", (event) => {
@@ -114,9 +169,9 @@ document.addEventListener("DOMContentLoaded", () => {
     makeDraggable(video2);
     makeResizable(video1);
     makeResizable(video2);
-});
+}
 
-document.addEventListener("DOMContentLoaded", () => {
+function setupStreamPanel() {
     let zIndexCounter = 1000;
     let editMode = false;
     const editButton = document.getElementById("editButton");
@@ -236,7 +291,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".video-container").forEach((el) => {
         el.style.pointerEvents = "none"; // Disable interactions
         el.setAttribute("draggable", "false"); // Disable dragging
+        const resizeHandle = el.querySelector(".resize-handle");
+        resizeHandle.style.display = "none"; // Hide resize handle
     });
 
     editButton.addEventListener("click", toggleEditMode);
-});
+}
