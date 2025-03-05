@@ -44,11 +44,9 @@ h1 {
     object-fit: cover;
     border-radius: 8px;
     overflow: hidden;
-    /* Remove pointer-events: none to allow interaction with controls */
     pointer-events: auto;
 }
 
-/* Force controls to be visible */
 video::-webkit-media-controls {
     display: flex !important;
     visibility: visible !important;
@@ -233,7 +231,6 @@ video:hover::-webkit-media-controls-panel {
     color: #777;
 }
 
-/* Ensure non-edit mode still allows video interaction */
 body:not(.edit-mode) .video-container {
     pointer-events: auto;
 }
