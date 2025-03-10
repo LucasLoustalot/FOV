@@ -3,13 +3,12 @@ body {
     background-color: #0e0e10;
     color: #efeff1;
     margin: 0;
-    padding: 20px;
 }
 
 h1 {
     color: #9147ff;
     font-weight: bold;
-    margin-bottom: 30px;
+    text-align: center;
     text-shadow: 0 2px 4px rgba(145, 71, 255, 0.3);
 }
 
