@@ -44,7 +44,7 @@ h1 {
     object-fit: cover;
     border-radius: 8px;
     overflow: hidden;
-    pointer-events: auto;
+    pointer-events: none;
 }
 
 video::-webkit-media-controls {
@@ -229,12 +229,4 @@ video:hover::-webkit-media-controls-panel {
 .arrow-btn.disabled:hover {
     background: #383838;
     color: #777;
-}
-
-body:not(.edit-mode) .video-container {
-    pointer-events: auto;
-}
-
-body:not(.edit-mode) .video-container * {
-    pointer-events: auto;
 }

@@ -6,7 +6,6 @@ function initializePlayer(videoElementId, streamUrl) {
     let wasPaused = false;
 
     if (Hls.isSupported()) {
-        
         const hls = new Hls({
             liveDurationInfinity: true,
             enableWorker: true,
@@ -19,9 +18,12 @@ function initializePlayer(videoElementId, streamUrl) {
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
             hls.on(Hls.Events.LEVEL_LOADED, function onLevelLoaded() {
                 if (hls.liveSyncPosition) {
-                    videoElement.currentTime = hls.liveSyncPosition - LIVE_SYNC_DELAY;
+                    videoElement.currentTime =
+                        hls.liveSyncPosition - LIVE_SYNC_DELAY;
                     hls.off(Hls.Events.LEVEL_LOADED, onLevelLoaded);
-                    videoElement.play().catch((e) => console.error("Play failed:", e));
+                    videoElement
+                        .play()
+                        .catch((e) => console.error("Play failed:", e));
                 }
             });
         });
@@ -42,12 +44,11 @@ function initializePlayer(videoElementId, streamUrl) {
             }
         });
 
-        videoElement.addEventListener("pause", function() {
+        videoElement.addEventListener("pause", function () {
             wasPaused = true;
         });
 
-        videoElement.addEventListener("play", function() {
-            
+        videoElement.addEventListener("play", function () {
             if (wasPaused) {
                 wasPaused = false;
 
@@ -57,7 +58,9 @@ function initializePlayer(videoElementId, streamUrl) {
                         const targetTime = livePos - LIVE_SYNC_DELAY;
                         videoElement.currentTime = targetTime;
                     } else {
-                        console.log("Cannot seek: liveSyncPosition not available");
+                        console.log(
+                            "Cannot seek: liveSyncPosition not available"
+                        );
                     }
                 }, 50);
             }
@@ -68,26 +71,35 @@ function initializePlayer(videoElementId, streamUrl) {
     } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
         videoElement.src = streamUrl;
         let wasPaused = false;
-        
+
         videoElement.addEventListener("loadedmetadata", function () {
-            videoElement.play().catch(e => console.error("Safari play failed:", e));
+            videoElement
+                .play()
+                .catch((e) => console.error("Safari play failed:", e));
         });
-        
-        videoElement.addEventListener("pause", function() {
+
+        videoElement.addEventListener("pause", function () {
             wasPaused = true;
         });
-        
-        videoElement.addEventListener("play", function() {
-            
+
+        videoElement.addEventListener("play", function () {
             if (wasPaused) {
                 wasPaused = false;
-                
+
                 setTimeout(() => {
-                    if (videoElement.duration && videoElement.duration !== Infinity) {
-                        const targetTime = Math.max(0, videoElement.duration - LIVE_SYNC_DELAY);
+                    if (
+                        videoElement.duration &&
+                        videoElement.duration !== Infinity
+                    ) {
+                        const targetTime = Math.max(
+                            0,
+                            videoElement.duration - LIVE_SYNC_DELAY
+                        );
                         videoElement.currentTime = targetTime;
                     } else {
-                        console.log("Safari: duration not available for seeking");
+                        console.log(
+                            "Safari: duration not available for seeking"
+                        );
                     }
                 }, 50);
             }
@@ -101,7 +113,6 @@ function initializePlayer(videoElementId, streamUrl) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    
     const player1 = initializePlayer(
         "videoElement1",
         "http://localhost:8080/hls/stream1.m3u8"
@@ -115,10 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setupDraggableResizable();
     setupStreamPanel();
 
-    document.querySelectorAll("video").forEach(video => {
-        video.addEventListener("click", function(e) {
+    document.querySelectorAll("video").forEach((video) => {
+        video.addEventListener("click", function (e) {
             e.stopPropagation();
-            
+
             if (this.paused) {
                 this.play();
             } else {
@@ -320,11 +331,11 @@ function setupStreamPanel() {
 
     function toggleEditMode() {
         editMode = !editMode;
-    
+
         if (editMode) {
             editButton.textContent = "SAVE";
             streamPanel.style.display = "block";
-    
+
             document.querySelectorAll(".video-container").forEach((el) => {
                 const resizeHandle = el.querySelector(".resize-handle");
                 el.classList.add("draggable-video");
@@ -335,23 +346,23 @@ function setupStreamPanel() {
         } else {
             editButton.textContent = "EDIT";
             streamPanel.style.display = "none";
-    
+
             document.querySelectorAll(".video-container").forEach((el) => {
                 const resizeHandle = el.querySelector(".resize-handle");
                 const videoEl = el.querySelector("video");
-                
+
                 el.classList.remove("draggable-video");
-                el.style.pointerEvents = "auto";
+                el.style.pointerEvents = "none";
                 el.setAttribute("draggable", "false");
                 resizeHandle.style.display = "none";
 
-                videoEl.style.pointerEvents = "auto";
+                //videoEl.style.pointerEvents = "auto";
             });
         }
     }
 
     document.querySelectorAll(".video-container").forEach((el) => {
-        el.style.pointerEvents = "auto";
+        el.style.pointerEvents = "none";
         el.setAttribute("draggable", "false");
         const resizeHandle = el.querySelector(".resize-handle");
         resizeHandle.style.display = "none";
