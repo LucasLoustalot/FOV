@@ -156,6 +156,26 @@ video:hover::-webkit-media-controls-panel {
     background-color: #772ce8;
 }
 
+#resetButton {
+    position: fixed;
+    top: 10px;
+    right: 85px;
+    background-color: #9146ff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+    visibility: hidden;
+}
+
+#resetButton:hover {
+    background-color: #772ce8;
+}
+
 .draggable-video {
     cursor: grab;
 }

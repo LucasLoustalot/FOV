@@ -230,6 +230,7 @@ function setupStreamPanel() {
     let zIndexCounter = 1000;
     let editMode = false;
     const editButton = document.getElementById("editButton");
+    const resetButton = document.getElementById("resetButton");
     const streamPanel = document.getElementById("streamPanel");
     const streams = [
         { id: "videoWrapper2", name: "Stream 2", visible: true },
@@ -382,6 +383,7 @@ function setupStreamPanel() {
         if (editMode) {
             editButton.textContent = "SAVE";
             streamPanel.style.display = "block";
+            resetButton.style.visibility = "visible";
 
             document.querySelectorAll(".video-container").forEach((el) => {
                 const resizeHandle = el.querySelector(".resize-handle");
@@ -391,6 +393,7 @@ function setupStreamPanel() {
                 resizeHandle.style.display = "block";
             });
         } else {
+            resetButton.style.visibility = "hidden";
             editButton.textContent = "EDIT";
             streamPanel.style.display = "none";
 
@@ -408,6 +411,17 @@ function setupStreamPanel() {
         }
     }
 
+    //TODO set size for cam, player lag when reseting
+    function resetLayout() {
+        document.getElementById("videoWrapper1").style.width = "70vw";
+        document.getElementById("videoWrapper1").style.height = "39.375vw";
+        document.getElementById("videoWrapper1").style.top = "10vh";
+        document.getElementById("videoWrapper1").style.left = "15vw";
+
+        document.getElementById("videoWrapper2").style.top = "10vh";
+        document.getElementById("videoWrapper2").style.left = "60vw";
+    }
+
     document.querySelectorAll(".video-container").forEach((el) => {
         el.style.pointerEvents = "none";
         el.setAttribute("draggable", "false");
@@ -416,4 +430,5 @@ function setupStreamPanel() {
     });
 
     editButton.addEventListener("click", toggleEditMode);
+    resetButton.addEventListener("click", resetLayout);
 }
