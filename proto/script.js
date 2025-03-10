@@ -232,8 +232,8 @@ function setupStreamPanel() {
     const editButton = document.getElementById("editButton");
     const streamPanel = document.getElementById("streamPanel");
     const streams = [
-        { id: "videoWrapper1", name: "Stream 1", visible: true },
         { id: "videoWrapper2", name: "Stream 2", visible: true },
+        { id: "videoWrapper1", name: "Stream 1", visible: true },
     ];
 
     const streamList = document.getElementById("streamList");

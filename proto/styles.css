@@ -165,13 +165,15 @@ video:hover::-webkit-media-controls-panel {
 }
 
 #videoWrapper1 {
-    top: 80px;
-    left: 20px;
+    width: 70vw;
+    height: 39.375vw;
+    top: 10vh;
+    left: 15vw;
 }
 
 #videoWrapper2 {
-    top: 80px;
-    left: 520px;
+    top: 10vh;
+    left: 60vw;
 }
 
 .stream-item {
