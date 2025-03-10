@@ -91,7 +91,7 @@ video:hover::-webkit-media-controls-panel {
     position: fixed;
     right: 10px;
     top: 50px;
-    width: 220px;
+    width: 150px;
     background-color: #18181b;
     color: white;
     padding: 10px;
