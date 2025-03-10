@@ -232,8 +232,8 @@ function setupStreamPanel() {
     const editButton = document.getElementById("editButton");
     const streamPanel = document.getElementById("streamPanel");
     const streams = [
-        { id: "videoWrapper1", name: "Stream 1" },
-        { id: "videoWrapper2", name: "Stream 2" },
+        { id: "videoWrapper1", name: "Stream 1", visible: true },
+        { id: "videoWrapper2", name: "Stream 2", visible: true },
     ];
 
     const streamList = document.getElementById("streamList");
@@ -254,11 +254,32 @@ function setupStreamPanel() {
         const li = document.createElement("li");
         li.classList.add("stream-item");
         li.dataset.streamId = stream.id;
+        li.dataset.visible = stream.visible.toString();
 
         const nameSpan = document.createElement("span");
         nameSpan.textContent = stream.name;
         nameSpan.classList.add("stream-name");
 
+        // Create control buttons container
+        const controlsContainer = document.createElement("div");
+        controlsContainer.classList.add("controls-container");
+
+        // Create visibility toggle button
+        const eyeButton = document.createElement("button");
+        eyeButton.classList.add("eye-btn");
+        eyeButton.title = stream.visible ? "Hide stream" : "Show stream";
+        eyeButton.innerHTML = stream.visible
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle><path d="m3 3 18 18"></path></svg>';
+
+        eyeButton.addEventListener("click", () =>
+            toggleStreamVisibility(li, stream.id)
+        );
+
+        // Add eye button to controls
+        controlsContainer.appendChild(eyeButton);
+
+        // Create arrows container
         const arrowsContainer = document.createElement("div");
         arrowsContainer.classList.add("arrows-container");
 
@@ -277,9 +298,35 @@ function setupStreamPanel() {
         arrowsContainer.appendChild(upArrow);
         arrowsContainer.appendChild(downArrow);
 
+        // Add all elements to the list item
         li.appendChild(nameSpan);
+        li.appendChild(controlsContainer);
         li.appendChild(arrowsContainer);
         streamList.appendChild(li);
+    }
+
+    function toggleStreamVisibility(streamItem, streamId) {
+        const streamElement = document.getElementById(streamId);
+        const eyeButton = streamItem.querySelector(".eye-btn");
+        const isVisible = streamItem.dataset.visible === "true";
+
+        // Toggle visibility state
+        streamItem.dataset.visible = (!isVisible).toString();
+
+        // Update the eye icon
+        if (!isVisible) {
+            // Switching to visible
+            eyeButton.innerHTML =
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            eyeButton.title = "Hide stream";
+            streamElement.style.display = "block";
+        } else {
+            // Switching to hidden
+            eyeButton.innerHTML =
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle><path d="m3 3 18 18"></path></svg>';
+            eyeButton.title = "Show stream";
+            streamElement.style.display = "none";
+        }
     }
 
     function moveStreamUp(streamItem) {

@@ -92,7 +92,7 @@ video:hover::-webkit-media-controls-panel {
     position: fixed;
     right: 10px;
     top: 50px;
-    width: 180px;
+    width: 220px;
     background-color: #18181b;
     color: white;
     padding: 10px;
@@ -192,6 +192,12 @@ video:hover::-webkit-media-controls-panel {
     margin-right: 10px;
 }
 
+.controls-container {
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+}
+
 .arrows-container {
     display: flex;
     flex-direction: column;
@@ -229,4 +235,34 @@ video:hover::-webkit-media-controls-panel {
 .arrow-btn.disabled:hover {
     background: #383838;
     color: #777;
+}
+
+.eye-btn {
+    background: #383838;
+    color: #9146ff;
+    border: none;
+    border-radius: 3px;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s, color 0.2s;
+    margin-right: 5px;
+}
+
+.eye-btn:hover {
+    background: #444444;
+    color: #ffffff;
+}
+
+/* Stream item with visibility state */
+.stream-item[data-visible="false"] .stream-name {
+    opacity: 0.6;
+}
+
+.stream-item[data-visible="false"] {
+    background: #1a1a1a;
 }
