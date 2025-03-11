@@ -1,4 +1,5 @@
 const hlsPlayers = {};
+var channel;
 
 function initializePlayer(videoElementId, streamUrl) {
     const videoElement = document.getElementById(videoElementId);
@@ -113,6 +114,24 @@ function initializePlayer(videoElementId, streamUrl) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
+    const streamer = urlParams.get("streamer");
+    console.log(streamer);
+
+    const parent = "127.0.0.1";
+    const height = "100%";
+    const width = "100%";
+    const iframe = document.createElement("iframe");
+
+    iframe.src = `https://www.twitch.tv/embed/${streamer}/chat?darkpopout&parent=${parent}`;
+    iframe.height = height;
+    iframe.width = width;
+    iframe.setAttribute("frameborder", "0");
+
+    document.getElementById("chat").appendChild(iframe);
+
     const player1 = initializePlayer(
         "videoElement1",
         "http://localhost:8080/hls/stream1.m3u8"

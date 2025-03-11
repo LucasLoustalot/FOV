@@ -99,6 +99,7 @@ video:hover::-webkit-media-controls-panel {
     border: 2px solid #9146ff;
     box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.5);
     font-size: 0.9em;
+    z-index: 1000000;
 }
 
 #streamPanel h2 {
@@ -188,12 +189,12 @@ video:hover::-webkit-media-controls-panel {
     width: 70vw;
     height: 39.375vw;
     top: 10vh;
-    left: 15vw;
+    left: 23vw;
 }
 
 #videoWrapper2 {
     top: 10vh;
-    left: 60vw;
+    left: 68vw;
     width: 25vw;
     height: 14.0625vw;
 }
@@ -288,4 +289,10 @@ video:hover::-webkit-media-controls-panel {
 
 .stream-item[data-visible="false"] {
     background: #1a1a1a;
+}
+
+.chatbox {
+    width: 20vw;
+    height: 87vh;
+    padding-left: 1.5vw;
 }
