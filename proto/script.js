@@ -413,13 +413,25 @@ function setupStreamPanel() {
 
     //TODO set size for cam, player lag when reseting
     function resetLayout() {
-        document.getElementById("videoWrapper1").style.width = "70vw";
-        document.getElementById("videoWrapper1").style.height = "39.375vw";
-        document.getElementById("videoWrapper1").style.top = "10vh";
-        document.getElementById("videoWrapper1").style.left = "15vw";
+        const video1 = document.getElementById("videoWrapper1");
+        const video2 = document.getElementById("videoWrapper2");
 
-        document.getElementById("videoWrapper2").style.top = "10vh";
-        document.getElementById("videoWrapper2").style.left = "60vw";
+        const videoWrap1 = document.getElementById("videoElement1");
+        const videoWrap2 = document.getElementById("videoElement2");
+
+        video1.style.top = "10vh";
+        video1.style.left = "15vw";
+        video1.style.width = "70vw";
+        video1.style.height = "39.375vw";
+        videoWrap1.style.width = "70vw";
+        videoWrap1.style.height = "39.375vw";
+
+        video2.style.top = "10vh";
+        video2.style.left = "60vw";
+        video2.style.width = "25vw";
+        video2.style.height = "14.0625vw";
+        videoWrap2.style.width = "25vw";
+        videoWrap2.style.height = "14.0625vw";
     }
 
     document.querySelectorAll(".video-container").forEach((el) => {
