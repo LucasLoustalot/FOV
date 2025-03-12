@@ -198,17 +198,26 @@ function setupDraggableResizable() {
 
     function makeResizable(element) {
         const resizeHandle = element.querySelector(".resize-handle");
-        const video = element.querySelector("video");
         let isResizing = false;
-        let aspectRatio;
+        let aspectRatio = null;
+
+        // For chat, we don't need to maintain aspect ratio
+        const isVideo = element.querySelector("video") !== null;
+        const targetElement = isVideo
+            ? element.querySelector("video")
+            : element;
 
         resizeHandle.addEventListener("mousedown", (event) => {
             isResizing = true;
             event.preventDefault();
 
-            aspectRatio = 16 / 9;
-            if (video.videoWidth && video.videoHeight) {
-                aspectRatio = video.videoWidth / video.videoHeight;
+            // Only set aspect ratio for videos
+            if (isVideo) {
+                const video = targetElement;
+                aspectRatio = 16 / 9;
+                if (video.videoWidth && video.videoHeight) {
+                    aspectRatio = video.videoWidth / video.videoHeight;
+                }
             }
 
             //element.style.zIndex = ++zIndexCounter;
@@ -219,16 +228,28 @@ function setupDraggableResizable() {
             const rect = element.getBoundingClientRect();
 
             let newWidth = event.clientX - rect.left;
-            let newHeight = newWidth / aspectRatio;
+            let newHeight;
 
+            // For videos, maintain aspect ratio
+            if (isVideo && aspectRatio) {
+                newHeight = newWidth / aspectRatio;
+            } else {
+                // For chat, allow any height
+                newHeight = event.clientY - rect.top;
+            }
+
+            // Set minimum sizes
             newWidth = Math.max(newWidth, 200);
-            newHeight = Math.max(newHeight, 200 / aspectRatio);
+            newHeight = Math.max(newHeight, isVideo ? 200 / aspectRatio : 200);
 
             element.style.width = `${newWidth}px`;
             element.style.height = `${newHeight}px`;
 
-            video.style.width = `${newWidth}px`;
-            video.style.height = `${newHeight}px`;
+            // For videos, also update the video element size
+            if (isVideo) {
+                targetElement.style.width = `${newWidth}px`;
+                targetElement.style.height = `${newHeight}px`;
+            }
         });
 
         document.addEventListener("mouseup", () => {
@@ -238,11 +259,21 @@ function setupDraggableResizable() {
 
     const video1 = document.getElementById("videoWrapper1");
     const video2 = document.getElementById("videoWrapper2");
+    const chat = document.getElementById("chat");
+
+    // Add resize handle to chat
+    if (!chat.querySelector(".resize-handle")) {
+        const resizeHandle = document.createElement("div");
+        resizeHandle.classList.add("resize-handle");
+        chat.appendChild(resizeHandle);
+    }
 
     makeDraggable(video1);
     makeDraggable(video2);
+    makeDraggable(chat);
     makeResizable(video1);
     makeResizable(video2);
+    makeResizable(chat);
 }
 
 function setupStreamPanel() {
@@ -254,6 +285,7 @@ function setupStreamPanel() {
     const streams = [
         { id: "videoWrapper2", name: "Stream 2", visible: true },
         { id: "videoWrapper1", name: "Stream 1", visible: true },
+        { id: "chat", name: "Chat", visible: true },
     ];
 
     const streamList = document.getElementById("sourceList");
@@ -392,6 +424,8 @@ function setupStreamPanel() {
         });
     }
 
+    // Clear the list first to avoid duplicates
+    streamList.innerHTML = "";
     streams.forEach(createStreamItem);
     updateArrowVisibility();
     updateZIndexes();
@@ -404,36 +438,47 @@ function setupStreamPanel() {
             streamPanel.style.display = "block";
             resetButton.style.visibility = "visible";
 
-            document.querySelectorAll(".video-container").forEach((el) => {
-                const resizeHandle = el.querySelector(".resize-handle");
-                el.classList.add("draggable-video");
-                el.style.pointerEvents = "auto";
-                el.setAttribute("draggable", "true");
-                resizeHandle.style.display = "block";
-            });
+            document
+                .querySelectorAll(".video-container, #chat")
+                .forEach((el) => {
+                    const resizeHandle = el.querySelector(".resize-handle");
+                    el.classList.add("draggable-video");
+                    el.style.pointerEvents = "auto";
+                    el.setAttribute("draggable", "true");
+                    if (resizeHandle) {
+                        resizeHandle.style.display = "block";
+                    }
+                });
         } else {
             resetButton.style.visibility = "hidden";
             editButton.textContent = "EDIT";
             streamPanel.style.display = "none";
 
-            document.querySelectorAll(".video-container").forEach((el) => {
-                const resizeHandle = el.querySelector(".resize-handle");
-                const videoEl = el.querySelector("video");
+            document
+                .querySelectorAll(".video-container, #chat")
+                .forEach((el) => {
+                    const resizeHandle = el.querySelector(".resize-handle");
+                    const videoEl = el.querySelector("video");
 
-                el.classList.remove("draggable-video");
-                el.style.pointerEvents = "none";
-                el.setAttribute("draggable", "false");
-                resizeHandle.style.display = "none";
+                    el.classList.remove("draggable-video");
+                    el.style.pointerEvents = "none";
+                    el.setAttribute("draggable", "false");
+                    if (resizeHandle) {
+                        resizeHandle.style.display = "none";
+                    }
 
-                //videoEl.style.pointerEvents = "auto";
-            });
+                    // For chat, we don't need to change pointer events for video
+                    if (videoEl) {
+                        //videoEl.style.pointerEvents = "auto";
+                    }
+                });
         }
     }
 
-    //TODO set size for cam, player lag when reseting
     function resetLayout() {
         const video1 = document.getElementById("videoWrapper1");
         const video2 = document.getElementById("videoWrapper2");
+        const chat = document.getElementById("chat");
 
         const videoWrap1 = document.getElementById("videoElement1");
         const videoWrap2 = document.getElementById("videoElement2");
@@ -451,13 +496,21 @@ function setupStreamPanel() {
         video2.style.height = "14.0625vw";
         videoWrap2.style.width = "25vw";
         videoWrap2.style.height = "14.0625vw";
+
+        // Reset chat position
+        chat.style.top = "10vh";
+        chat.style.left = "1.5vw";
+        chat.style.width = "20vw";
+        chat.style.height = "87vh";
     }
 
-    document.querySelectorAll(".video-container").forEach((el) => {
+    document.querySelectorAll(".video-container, #chat").forEach((el) => {
         el.style.pointerEvents = "none";
         el.setAttribute("draggable", "false");
         const resizeHandle = el.querySelector(".resize-handle");
-        resizeHandle.style.display = "none";
+        if (resizeHandle) {
+            resizeHandle.style.display = "none";
+        }
     });
 
     editButton.addEventListener("click", toggleEditMode);

@@ -301,4 +301,16 @@ video:hover::-webkit-media-controls-panel {
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     left: 1.5vw;
+    top: 10vh;
+    cursor: grab;
+    transition: border-color 0.3s ease;
+    z-index: 1;
+}
+
+.chatbox:hover {
+    border-color: #9147ff;
+}
+
+.chatbox:active {
+    cursor: grabbing;
 }
