@@ -250,13 +250,13 @@ function setupStreamPanel() {
     let editMode = false;
     const editButton = document.getElementById("editButton");
     const resetButton = document.getElementById("resetButton");
-    const streamPanel = document.getElementById("streamPanel");
+    const streamPanel = document.getElementById("sourcePanel");
     const streams = [
         { id: "videoWrapper2", name: "Stream 2", visible: true },
         { id: "videoWrapper1", name: "Stream 1", visible: true },
     ];
 
-    const streamList = document.getElementById("streamList");
+    const streamList = document.getElementById("sourceList");
 
     function updateZIndexes() {
         Array.from(streamList.children)
@@ -439,14 +439,14 @@ function setupStreamPanel() {
         const videoWrap2 = document.getElementById("videoElement2");
 
         video1.style.top = "10vh";
-        video1.style.left = "15vw";
+        video1.style.left = "23vw";
         video1.style.width = "70vw";
         video1.style.height = "39.375vw";
         videoWrap1.style.width = "70vw";
         videoWrap1.style.height = "39.375vw";
 
         video2.style.top = "10vh";
-        video2.style.left = "60vw";
+        video2.style.left = "68vw";
         video2.style.width = "25vw";
         video2.style.height = "14.0625vw";
         videoWrap2.style.width = "25vw";
