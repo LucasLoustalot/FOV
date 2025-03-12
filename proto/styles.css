@@ -102,7 +102,7 @@ video:hover::-webkit-media-controls-panel {
     z-index: 1000000;
 }
 
-#streamPanel h2 {
+#sourcePanel h2 {
     text-align: center;
     color: #9146ff;
     font-size: 1em;
