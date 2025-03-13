@@ -188,11 +188,17 @@ function setupDraggableResizable() {
             let y = event.clientY - offsetY;
             element.style.left = `${x}px`;
             element.style.top = `${y}px`;
+            const sources = document.getElementById("sourcePanel");
+            sources.style.opacity = "0.3";
+            element.style.opacity = "0.5";
         });
 
         document.addEventListener("mouseup", () => {
             isDragging = false;
             element.style.cursor = "grab";
+            const sources = document.getElementById("sourcePanel");
+            sources.style.opacity = "1";
+            element.style.opacity = "1";
         });
     }
 
@@ -211,7 +217,6 @@ function setupDraggableResizable() {
             isResizing = true;
             event.preventDefault();
 
-            // Only set aspect ratio for videos
             if (isVideo) {
                 const video = targetElement;
                 aspectRatio = 16 / 9;
@@ -219,8 +224,6 @@ function setupDraggableResizable() {
                     aspectRatio = video.videoWidth / video.videoHeight;
                 }
             }
-
-            //element.style.zIndex = ++zIndexCounter;
         });
 
         document.addEventListener("mousemove", (event) => {
