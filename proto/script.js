@@ -283,8 +283,8 @@ function setupStreamPanel() {
     const resetButton = document.getElementById("resetButton");
     const streamPanel = document.getElementById("sourcePanel");
     const streams = [
-        { id: "videoWrapper2", name: "Stream 2", visible: true },
-        { id: "videoWrapper1", name: "Stream 1", visible: true },
+        { id: "videoWrapper2", name: "Camera", visible: true },
+        { id: "videoWrapper1", name: "Gameplay", visible: true },
         { id: "chat", name: "Chat", visible: true },
     ];
 
@@ -458,18 +458,12 @@ function setupStreamPanel() {
                 .querySelectorAll(".video-container, #chat")
                 .forEach((el) => {
                     const resizeHandle = el.querySelector(".resize-handle");
-                    const videoEl = el.querySelector("video");
 
                     el.classList.remove("draggable-video");
                     el.style.pointerEvents = "none";
                     el.setAttribute("draggable", "false");
                     if (resizeHandle) {
                         resizeHandle.style.display = "none";
-                    }
-
-                    // For chat, we don't need to change pointer events for video
-                    if (videoEl) {
-                        //videoEl.style.pointerEvents = "auto";
                     }
                 });
         }
@@ -497,11 +491,27 @@ function setupStreamPanel() {
         videoWrap2.style.width = "25vw";
         videoWrap2.style.height = "14.0625vw";
 
-        // Reset chat position
         chat.style.top = "10vh";
         chat.style.left = "1.5vw";
         chat.style.width = "20vw";
         chat.style.height = "87vh";
+
+        const streams = [video1, video2, chat];
+        streams.forEach((stream) => {
+            stream.style.display = "block";
+            const streamItem = document.querySelector(
+                `[data-stream-id="${stream.id}"]`
+            );
+            if (streamItem) {
+                streamItem.dataset.visible = "true";
+                const eyeButton = streamItem.querySelector(".eye-btn");
+                if (eyeButton) {
+                    eyeButton.innerHTML =
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+                    eyeButton.title = "Hide stream";
+                }
+            }
+        });
     }
 
     document.querySelectorAll(".video-container, #chat").forEach((el) => {
