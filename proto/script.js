@@ -156,6 +156,20 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // Volume control for Player 1
+    const volume1 = document.getElementById("volume1");
+    const videoElement1 = document.getElementById("videoElement1");
+    volume1.addEventListener("input", () => {
+        videoElement1.volume = volume1.value;
+    });
+
+    // Volume control for Player 2
+    const volume2 = document.getElementById("volume2");
+    const videoElement2 = document.getElementById("videoElement2");
+    volume2.addEventListener("input", () => {
+        videoElement2.volume = volume2.value;
+    });
 });
 
 function setupDraggableResizable() {

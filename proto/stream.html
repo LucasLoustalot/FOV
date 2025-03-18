@@ -22,9 +22,32 @@
         <button id="resetButton">RESET</button>
         <button id="editButton">EDIT</button>
 
-        <div id="sourcePanel" style="display: none">
+        <div id="sourcePanel">
             <h2>Sources:</h2>
             <ul id="sourceList"></ul>
+            <h2>Audio:</h2>
+            <div class="volume-control">
+                <label for="volume1">Gameplay</label>
+                <input
+                    type="range"
+                    id="volume1"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="1"
+                />
+            </div>
+            <div class="volume-control">
+                <label for="volume2">Camera</label>
+                <input
+                    type="range"
+                    id="volume2"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="1"
+                />
+            </div>
         </div>
 
         <div id="chat" class="chatbox"></div>
