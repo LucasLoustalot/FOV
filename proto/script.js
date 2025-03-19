@@ -3,6 +3,7 @@ var channel;
 
 function initializePlayer(videoElementId, streamUrl) {
     const videoElement = document.getElementById(videoElementId);
+    videoElement.controls = false; // Disable video player controls
     const LIVE_SYNC_DELAY = 10;
     let wasPaused = false;
 
@@ -71,6 +72,7 @@ function initializePlayer(videoElementId, streamUrl) {
         return hls;
     } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
         videoElement.src = streamUrl;
+        videoElement.controls = false; // Disable video player controls
         let wasPaused = false;
 
         videoElement.addEventListener("loadedmetadata", function () {
