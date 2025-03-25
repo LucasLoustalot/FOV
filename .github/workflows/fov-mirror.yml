@@ -1,0 +1,25 @@
+name: Mirror Repository - WEB-FOV
+
+on:
+  push:
+    branches-ignore:
+      - "ga-ignore-*"
+
+jobs:
+    mirror_repo:
+        name: Mirror Repository
+        runs-on: Linux
+        steps:
+            - name: Update WEB-FOV on EPITECH Repository
+              uses: nkoppel/push-files-to-another-repository@v1.1.4
+              env:
+                API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+              with:
+                source-files: '*'
+                destination-username: 'EpitechPromo2027'
+                destination-repository: 'G-EIP-600-TLS-6-1-eip-raphael.scandella'
+                destination-branch: 'repo-WEB-FOV'
+                destination-directory: 'website'
+                commit-username: 'github-actions[bot]'
+                commit-email: 'github-actions[bot]@users.noreply.github.com'
+                commit-message: 'Sync WEB-FOV Commits'
