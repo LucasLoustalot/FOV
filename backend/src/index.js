@@ -4,10 +4,12 @@ dotenv.config();
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 
 import db from './db.js';
 import apiRoutes from './routes/index.js';
 import { createMediaRoutes, startMediaServer } from './mediaServer.mjs';
+import swaggerDocument from './swagger.js';
 
 const PORT = process.env.PORT || 4000;
 
@@ -22,6 +24,8 @@ const mediaRouter = createMediaRoutes();
 app.use(mediaRouter);
 
 app.get('/', (req, res) => res.json({ ok: true, message: 'FOV backend running' }));
+app.get('/api-docs.json', (req, res) => res.json(swaggerDocument));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Mount API routes under /api
 app.use('/api', apiRoutes);
@@ -31,7 +35,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
 });
 
-async function start() {
+async function start() { 
     try {
         // verify PostgreSQL connection
         await db.query('SELECT 1');
