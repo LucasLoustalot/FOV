@@ -360,7 +360,7 @@ function createMediaRoutes() {
         try {
             const host = process.env.SRT_URL || '127.0.0.1';
             //const srtUrlListener = buildSrtUrl(host, debugSrtPort, 'caller');
-            const srtUrlListener = "srt://0.0.0.0:9999?mode=listener";
+            const srtUrlListener = "srt://0.0.0.0:5555?mode=listener";
             writeStreamMeta(streamId, trackVNum, trackANum, HLS_DIR);
 
             registeredStreams.set(streamId, {
