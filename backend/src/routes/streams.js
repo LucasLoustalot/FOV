@@ -9,7 +9,7 @@ import { resolveTrackIsVideo, sortTrackIds } from '../streamTrackUtils.js';
 const MEDIA_ROOT = process.env.MEDIA_ROOT || path.join(process.cwd(), 'media');
 const HLS_DIR = path.join(MEDIA_ROOT, 'hls');
 
-function isPlaylistReady(playlistPath, minSegments = 2) {
+/*function isPlaylistReady(playlistPath, minSegments = 2) {
     try {
         if (!fs.existsSync(playlistPath)) {
             return false;
@@ -31,9 +31,9 @@ function isPlaylistReady(playlistPath, minSegments = 2) {
         console.error(`Error checking playlist ${playlistPath}:`, err.message);
         return false;
     }
-}
+}*/
 
-function getSegmentCount(playlistPath) {
+/*function getSegmentCount(playlistPath) {
     try {
         if (!fs.existsSync(playlistPath)) {
             return 0;
@@ -44,7 +44,7 @@ function getSegmentCount(playlistPath) {
     } catch (err) {
         return 0;
     }
-}
+}*/
 
 /*function getCurrentTracksState(protocol = 'http') {
     try {
