@@ -22,7 +22,8 @@
         "node-fetch": "^3.3.2",
         "node-media-server": "2.2.0",
         "pg": "^8.23.0",
-        "srt": "^0.0.3"
+        "srt": "^0.0.3",
+        "swagger-ui-express": "^5.0.1"
     },
     "devDependencies": {
         "@types/pg": "^8.23.1",
