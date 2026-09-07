@@ -4,6 +4,7 @@ import path from 'path';
 import cors from 'cors';
 import { spawn } from 'child_process';
 import { randomUUID } from 'crypto';
+import { writeStreamMeta } from './streamTrackUtils.js';
 
 const MEDIA_ROOT = process.env.MEDIA_ROOT || path.join(process.cwd(), 'media');
 const HLS_DIR = path.join(MEDIA_ROOT, 'hls');
@@ -13,6 +14,39 @@ await fs.promises.mkdir(HLS_DIR, { recursive: true });
 const ffmpegProcesses = new Map();
 const registeredStreams = new Map();
 const baseSrtPort = parseInt(process.env.SRT_PORT || '9999', 10);
+const debugSrtPort = parseInt(process.env.DEBUG_SRT_PORT || String(baseSrtPort), 10);
+
+function parseRegisterRequest(body) {
+    const { tracks: tracksV, audioTracks: tracksA, streamId: providedStreamId } = body ?? {};
+    const trackVNum = Number.parseInt(tracksV, 10);
+    const trackANum = Number.parseInt(tracksA, 10);
+
+    if (!Number.isInteger(trackVNum) || trackVNum <= 0) {
+        return { error: "Invalid 'video tracks' parameter." };
+    }
+    if (!Number.isInteger(trackANum) || trackANum <= 0) {
+        return { error: "Invalid 'audio tracks' parameter." };
+    }
+
+    return {
+        trackVNum,
+        trackANum,
+        streamId: providedStreamId || randomUUID()
+    };
+}
+
+function buildSrtUrl(host, port, mode) {
+    return [
+        `srt://${host}:${port}`,
+        `?mode=${mode}`,
+        '&latency=4000000',
+        '&rcvbuf=134217728',
+        '&sndbuf=134217728',
+        '&peerlatency=4000000',
+        '&tlpktdrop=0',
+        '&nakreport=1'
+    ].join('');
+}
 
 // Configuration for process termination
 const PROCESS_GRACE_PERIOD = 5000; // 5 seconds to gracefully shut down
@@ -96,7 +130,8 @@ function buildFfmpegArgs(videoTrackCount, audioTrackCount, streamId, srtUrl) {
         audioCodecArgs.push(`-c:a:${a}`, 'copy');
     }
 
-    // 3. Build Strict HLS Variant Streams (No Fallbacks)
+    // 3. Pair each video track with its audio at the same index (v:0,a:0).
+    // Extra audio tracks beyond the video count get their own audio-only variant (a:N).
     const maxTracks = Math.max(videoTrackCount, audioTrackCount);
 
     for (let i = 0; i < maxTracks; i++) {
@@ -104,13 +139,10 @@ function buildFfmpegArgs(videoTrackCount, audioTrackCount, streamId, srtUrl) {
         const hasAudio = i < audioTrackCount;
 
         if (hasVideo && hasAudio) {
-            // Both exist at this index: Pair them
             varStreamEntries.push(`v:${i},a:${i}`);
         } else if (hasVideo) {
-            // Only video exists at this index: Video alone
             varStreamEntries.push(`v:${i}`);
         } else if (hasAudio) {
-            // Only audio exists at this index: Audio alone
             varStreamEntries.push(`a:${i}`);
         }
     }
@@ -265,43 +297,28 @@ function createMediaRoutes() {
 
     // POST /ffmpeg/register — register a stream and create a unique SRT listener
     router.post('/ffmpeg/register', (req, res) => {
-        const { tracks: tracksV, audioTracks: tracksA, streamId: providedStreamId } = req.body ?? {};
-        const trackVNum = Number.parseInt(tracksV, 10);
-        const trackANum = Number.parseInt(tracksA, 10);
-
-        if (!Number.isInteger(trackVNum) || trackVNum <= 0) {
-            return res.status(400).json({ error: "Invalid 'video tracks' parameter." });
-        }
-        if (!Number.isInteger(trackANum) || trackANum <= 0) {
-            return res.status(400).json({ error: "Invalid 'audio tracks' parameter." });
+        const parsed = parseRegisterRequest(req.body);
+        if (parsed.error) {
+            return res.status(400).json({ error: parsed.error });
         }
 
-        const streamId = providedStreamId || randomUUID();
+        const { trackVNum, trackANum, streamId } = parsed;
 
         if (registeredStreams.has(streamId)) {
             return res.status(409).json({ error: 'StreamId already registered', streamId });
         }
 
         try {
-            const url = process.env.SRT_URL || '127.0.0.1';
+            const host = process.env.SRT_URL || '127.0.0.1';
             let srtPort = baseSrtPort;
             while (Array.from(registeredStreams.values()).some(s => s.port === srtPort)) {
                 srtPort++;
             }
 
             const srtUrl = `srt://0.0.0.0:${srtPort}`;
+            const srtUrlExternal = buildSrtUrl(host, srtPort, 'caller');
 
-            const srtUrlExternal = [
-                `srt://${url}:${srtPort}`,
-                '?mode=caller',
-                '&latency=4000000',
-                '&rcvbuf=134217728',
-                '&sndbuf=134217728',
-                '&peerlatency=4000000',
-                '&tlpktdrop=0',
-                '&nakreport=1'
-            ].join('');
-
+            writeStreamMeta(streamId, trackVNum, trackANum, HLS_DIR);
             startFFmpegListener(streamId, trackVNum, trackANum, null, srtUrl);
 
             registeredStreams.set(streamId, {
@@ -323,6 +340,46 @@ function createMediaRoutes() {
             });
         } catch (err) {
             console.error(`⚠️ Failed to register stream ${streamId}:`, err);
+            return res.status(500).json({ error: 'Failed to register stream' });
+        }
+    });
+
+    // POST /ffmpeg/register/debug — same as register but returns a hardcoded SRT listener URL for VLC (no FFmpeg)
+    router.post('/ffmpeg/register/debug', (req, res) => {
+        const parsed = parseRegisterRequest(req.body);
+        if (parsed.error) {
+            return res.status(400).json({ error: parsed.error });
+        }
+
+        const { trackVNum, trackANum, streamId } = parsed;
+
+        if (registeredStreams.has(streamId)) {
+            return res.status(409).json({ error: 'StreamId already registered', streamId });
+        }
+
+        try {
+            const srtUrlListener = 'srt://0.0.0.0:5555?mode=listener';
+            writeStreamMeta(streamId, trackVNum, trackANum, HLS_DIR);
+
+            registeredStreams.set(streamId, {
+                tracksV: trackVNum,
+                tracksA: trackANum,
+                port: debugSrtPort,
+                debug: true
+            });
+
+            console.log(`🐛 Debug stream registered: ${streamId} (tracksV=${trackVNum}, tracksA=${trackANum}, vlc listener port=${debugSrtPort})`);
+
+            return res.status(200).json({
+                status: 'registered',
+                streamId,
+                tracksV: trackVNum,
+                tracksA: trackANum,
+                srtUrl: srtUrlListener,
+                hlsUrl: `/api/hls/${streamId}/0/playlist.m3u8`
+            });
+        } catch (err) {
+            console.error(`⚠️ Failed to register debug stream ${streamId}:`, err);
             return res.status(500).json({ error: 'Failed to register stream' });
         }
     });
@@ -423,6 +480,7 @@ function createMediaRoutes() {
 async function startMediaServer() {
     console.log('🚀 Media server ready!');
     console.log(`   📝 Register stream: POST http://${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/register with {"tracks": 2}`);
+    console.log(`   🐛 Debug register: POST http://${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/register/debug (returns VLC listener URL on port ${debugSrtPort})`);
     console.log('   🔗 FFmpeg starts immediately with its own SRT URL');
     console.log(`   📊 Check status: GET http://${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/status`);
 

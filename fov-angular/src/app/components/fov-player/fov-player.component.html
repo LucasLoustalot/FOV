@@ -30,9 +30,10 @@
       </div>
     </div>
 
-    <div class="fov-stage" [id]="'stageArea_' + playerId">
+    <div class="fov-stage" [id]="'stageArea_' + playerId" (click)="unlockAudio()">
       <ng-container *ngFor="let wrapper of videoWrappers; let i = index">
         <div
+          *ngIf="wrapper.isVideo"
           [id]="'videoWrapper_' + playerId + '_' + wrapper.track.index"
           class="video-container"
           [class.editable]="editMode"
@@ -52,7 +53,7 @@
 
           <video
             [id]="'videoElement_' + playerId + '_' + wrapper.track.index"
-            playsinline muted>
+            playsinline>
           </video>
 
           <div class="resize-handle" *ngIf="editMode"
@@ -62,7 +63,17 @@
       </ng-container>
     </div>
 
-    <div class="fov-sidebar" *ngIf="playbackStarted">
+    <div class="audio-sink" aria-hidden="true">
+      <ng-container *ngFor="let wrapper of videoWrappers">
+        <video
+          *ngIf="!wrapper.isVideo"
+          [id]="'videoElement_' + playerId + '_' + wrapper.track.index"
+          playsinline>
+        </video>
+      </ng-container>
+    </div>
+
+    <div class="fov-sidebar" *ngIf="videoWrappers.length > 0">
       <div class="panel-section" *ngIf="editMode">
         <h4>Sources</h4>
         <ul class="source-list">

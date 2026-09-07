@@ -13,10 +13,16 @@ const pool = new Pool({
     keepAlive: true
 });
 
+function toPostgresPlaceholders(text) {
+    let index = 0;
+    return text.replace(/\?/g, () => `$${++index}`);
+}
+
 export default {
     pool,
-    async query(text, params) {
-        const res = await pool.query(text, params);
+    async query(text, params = []) {
+        const sql = params.length > 0 ? toPostgresPlaceholders(text) : text;
+        const res = await pool.query(sql, params);
         return res.rows;
     },
     async getClient() {
