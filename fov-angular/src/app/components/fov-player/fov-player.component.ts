@@ -14,6 +14,8 @@ export interface Track {
   index: number;
   name: string;
   videoUrl: string;
+  /** true = video track (with paired audio when available); false = audio-only */
+  isVideo: boolean;
 }
 
 export interface VideoWrapper {
@@ -33,6 +35,7 @@ export interface VideoWrapper {
   hasManifest: boolean;
   bufferEnd: number;
   bufferStart: number;
+  isVideo: boolean;
 }
 
 interface ApiTracksResponse {
@@ -47,6 +50,8 @@ interface ApiTracksResponse {
 interface ApiStreamTrack {
   trackId: string;
   videoUrl: string;
+  /** true = video track (with paired audio when available); false = audio-only */
+  isVideo?: boolean;
 }
 
 interface ApiLiveStream {
@@ -111,6 +116,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
   private readonly MAX_POLL_ATTEMPTS = 60;
   private pollAttempts = 0;
   private isInitialized = false;
+  private audioUnlocked = false;
   private readonly MOBILE_BREAKPOINT = 768;
 
   readonly playerId = `fov_${Math.random().toString(36).substr(2, 9)}`;
@@ -195,7 +201,8 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     const stageH = stage.offsetHeight;
 
     if (this.isMobileLayout()) {
-      const main = this.videoWrappers[0];
+      const main = this.videoWrappers.find(w => w.isVideo);
+      if (!main) return;
       const mainAspect = main.aspectRatio || 16 / 9;
       const mainFitted = this.getFittedSize(stageW, stageH * 0.68, mainAspect, 0.96);
 
@@ -210,8 +217,9 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
 
       for (let i = 1; i < this.videoWrappers.length; i++) {
         const wrapper = this.videoWrappers[i];
-        const ratio = wrapper.aspectRatio || 16 / 9;
+        if (!wrapper.isVideo) continue;
 
+        const ratio = wrapper.aspectRatio || 16 / 9;
         wrapper.height = thumbHeight;
         wrapper.width = wrapper.height * ratio;
 
@@ -222,12 +230,13 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
 
         wrapper.x = currentX;
         wrapper.y = currentY;
-
         currentX += wrapper.width + 8;
         this.clampWrapperToStage(wrapper);
       }
     } else {
       this.videoWrappers.forEach((wrapper, index) => {
+        if (!wrapper.isVideo) return;
+
         const ratio = wrapper.aspectRatio || 16 / 9;
         const fitted = this.getFittedSize(
           stageW,
@@ -298,6 +307,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
         index: i,
         name: t.trackId,
         videoUrl: t.videoUrl,
+        isVideo: t.isVideo ?? true,
       }));
       console.log(
         `[loadTracks] Stream "${this.streamId}" found with ${this.availableTracks.length} tracks`,
@@ -318,6 +328,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
         index: i,
         name: t.trackId,
         videoUrl: t.videoUrl,
+        isVideo: t.isVideo ?? true,
       }));
       console.log(
         `[loadTracks] Stream "${this.streamId}" found with ${this.availableTracks.length} tracks`,
@@ -464,6 +475,13 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
       }
     }
 
+    if (!track.isVideo) {
+      initialWidth = 0;
+      initialHeight = 0;
+      initialX = 0;
+      initialY = 0;
+    }
+
     const newWrapper: VideoWrapper = {
       playerId: `player_${this.playerId}_${trackCopy.index}`,
       track: trackCopy,
@@ -481,6 +499,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
       hasManifest: false,
       bufferEnd: 0,
       bufferStart: 0,
+      isVideo: track.isVideo,
     };
 
     this.videoWrappers.push(newWrapper);
@@ -515,13 +534,17 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     }, 50);
   }
 
-  private initHlsForWrapper(wrapper: VideoWrapper, videoUrl: string) {
+  private initHlsForWrapper(wrapper: VideoWrapper, videoUrl: string, attempt = 0) {
     const videoEl = document.getElementById(
       `videoElement_${this.playerId}_${wrapper.track.index}`,
     ) as HTMLVideoElement;
 
     if (!videoEl) {
-      console.error(`[${wrapper.track.name}] Video element not found`);
+      if (attempt < 20) {
+        setTimeout(() => this.initHlsForWrapper(wrapper, videoUrl, attempt + 1), 50);
+      } else {
+        console.error(`[${wrapper.track.name}] Video element not found`);
+      }
       return;
     }
 
@@ -794,26 +817,10 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     await this.waitForAllReady();
     console.log('[Sync] All players ready');
 
-    for (const w of this.videoWrappers) {
-      if (w.videoElement) {
-        w.videoElement.volume = w.volume;
-        w.videoElement.muted = w.volume === 0;
-      }
-    }
+    await this.playAllWrappers();
 
     requestAnimationFrame(() => {
       console.log('[Sync] Starting playback NOW');
-
-      for (const w of this.videoWrappers) {
-        if (w.videoElement) {
-          w.videoElement.playbackRate = 1;
-          w.videoElement.play().catch((err) => {
-            console.warn(`[${w.track.name}] Play failed, retrying muted:`, err);
-            w.videoElement!.muted = true;
-            w.videoElement!.play().catch(() => {});
-          });
-        }
-      }
 
       this.playbackStarted = true;
       this.isBufferingPhase = false;
@@ -866,10 +873,9 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     if (this.videoWrappers.length < 2) return;
     if (!this.playbackStarted) return;
 
-    const master = this.videoWrappers[0];
-    if (!master.videoElement) return;
-    if (master.videoElement.paused || master.videoElement.readyState < 3)
-      return;
+    const master = this.videoWrappers.find(w => w.playerId === this.masterPlayerId);
+    if (!master || !master.isVideo || !master.videoElement) return;
+    if (master.videoElement.paused || master.videoElement.readyState < 3) return;
 
     const masterTime = master.videoElement.currentTime;
     this.maxDrift = 0;
@@ -923,6 +929,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
 
   startDrag(event: PointerEvent, wrapper: VideoWrapper) {
     if (!this.editMode) return;
+    if (!wrapper.isVideo) return;
     if ((event.target as HTMLElement).classList.contains('resize-handle'))
       return;
 
@@ -937,6 +944,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
 
   startResize(event: PointerEvent, wrapper: VideoWrapper) {
     if (!this.editMode) return;
+    if (!wrapper.isVideo) return;
 
     this.activeResizeWrapper = wrapper;
     this.dragStartX = event.clientX;
@@ -1011,13 +1019,20 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     const stageW = stage ? stage.offsetWidth : 800;
     const stageH = stage ? stage.offsetHeight : 450;
 
-    this.videoWrappers.sort((a, b) => {
+    const videoWrappers = this.videoWrappers.filter(w => w.isVideo);
+    videoWrappers.sort((a, b) => {
       const indexA = this.originalTrackOrder.indexOf(a.track.name.split('_')[0]);
       const indexB = this.originalTrackOrder.indexOf(b.track.name.split('_')[0]);
       return indexA - indexB;
     });
 
-    this.videoWrappers.forEach((w, i) => {
+    let videoIndex = 0;
+    this.videoWrappers.forEach(w => {
+      if (!w.isVideo) {
+        w.visible = true;
+        return;
+      }
+      const i = videoIndex++;
       if (i === 0) {
         w.x = 0;
         w.y = 0;
@@ -1065,10 +1080,10 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateMasterReference() {
-    if (this.videoWrappers.length > 0) {
-      const newMaster = this.videoWrappers[0];
-      const wasDifferentMaster = this.masterPlayerId !== newMaster.playerId;
-      this.masterPlayerId = newMaster.playerId;
+    const masterWrapper = this.videoWrappers.find(w => w.isVideo);
+    if (masterWrapper) {
+      const wasDifferentMaster = this.masterPlayerId !== masterWrapper.playerId;
+      this.masterPlayerId = masterWrapper.playerId;
       this.setupMasterListeners();
 
       if (wasDifferentMaster) {
@@ -1110,13 +1125,51 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     this.editMode = !this.editMode;
   }
 
+  private applyWrapperAudio(wrapper: VideoWrapper) {
+    if (!wrapper.videoElement) return;
+    wrapper.videoElement.volume = wrapper.volume;
+    wrapper.videoElement.muted = wrapper.volume === 0;
+  }
+
+  unlockAudio() {
+    this.audioUnlocked = true;
+    for (const w of this.videoWrappers) {
+      this.applyWrapperAudio(w);
+    }
+  }
+
+  private async playAllWrappers() {
+    for (const w of this.videoWrappers) {
+      if (w.videoElement) {
+        w.videoElement.playbackRate = 1;
+        w.videoElement.muted = true;
+        w.videoElement.volume = w.volume;
+      }
+    }
+
+    await Promise.all(
+      this.videoWrappers.map(async (w) => {
+        if (!w.videoElement) return;
+        try {
+          await w.videoElement.play();
+        } catch (err) {
+          console.warn(`[${w.track.name}] Play failed, retrying muted:`, err);
+          w.videoElement.muted = true;
+          await w.videoElement.play().catch(() => {});
+        }
+      }),
+    );
+
+    for (const w of this.videoWrappers) {
+      this.applyWrapperAudio(w);
+    }
+  }
+
   setVolume(wrapper: VideoWrapper, event: Event) {
+    this.audioUnlocked = true;
     const val = parseFloat((event.target as HTMLInputElement).value);
     wrapper.volume = val;
-    if (wrapper.videoElement) {
-      wrapper.videoElement.volume = val;
-      wrapper.videoElement.muted = val === 0;
-    }
+    this.applyWrapperAudio(wrapper);
   }
 
   refreshStream() {
@@ -1134,6 +1187,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
     this.maxDrift = 0;
     this.playbackStarted = false;
     this.isBufferingPhase = true;
+    this.audioUnlocked = false;
     this.pollAttempts = 0;
     this.isInitialized = false;
     this.loadTracks();
