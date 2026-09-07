@@ -102,7 +102,7 @@ async function resolveTrackIsVideo(streamId, trackId, trackPath, options = {}) {
         }
 
         const liveData = ffmpegProcesses?.get(streamId);
-        if (liveData?.tracksV != null) {
+        if (liveData?.tracksV !== null) {
             return isVideoVariant(variantIndex, liveData.tracksV);
         }
     }

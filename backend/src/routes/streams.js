@@ -46,7 +46,7 @@ function getSegmentCount(playlistPath) {
     }
 }
 
-function getCurrentTracksState(protocol = 'http') {
+/*function getCurrentTracksState(protocol = 'http') {
     try {
         if (!fs.existsSync(HLS_DIR)) {
             return {
@@ -129,7 +129,7 @@ function getCurrentTracksState(protocol = 'http') {
             message: 'Error reading tracks'
         };
     }
-}
+}*/
 
 async function buildTracks(streamId, trackDirs, url) {
     const sortedTrackIds = sortTrackIds(trackDirs);
