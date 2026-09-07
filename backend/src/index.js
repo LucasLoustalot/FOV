@@ -30,6 +30,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Mount API routes under /api
 app.use('/api', apiRoutes);
 
+// eslint-disable-next-line
 app.use((err, req, res, next) => {
     console.error(err);
     res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
