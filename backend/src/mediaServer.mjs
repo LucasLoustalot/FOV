@@ -422,9 +422,9 @@ function createMediaRoutes() {
 
 async function startMediaServer() {
     console.log('🚀 Media server ready!');
-    console.log(`   📝 Register stream: POST http://${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/register with {"tracks": 2}`);
+    console.log(`   📝 Register stream: POST ${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/register with {"tracks": 2}`);
     console.log('   🔗 FFmpeg starts immediately with its own SRT URL');
-    console.log(`   📊 Check status: GET http://${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/status`);
+    console.log(`   📊 Check status: GET ${process.env.API_HOSTNAME || 'localhost'}/ffmpeg/status`);
 
     // Periodic check for zombie processes (every 30 seconds)
     const healthCheckInterval = setInterval(async () => {
