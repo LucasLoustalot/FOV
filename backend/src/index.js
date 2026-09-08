@@ -40,7 +40,7 @@ async function start() {
     try {
         // verify PostgreSQL connection
         await db.query('SELECT 1');
-        console.log('✅ Connected to BDD');1
+        console.log('✅ Connected to BDD');
         // Clear HLS files on server start
         clearHLSFiles();
 
