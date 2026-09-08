@@ -1,11 +1,14 @@
-import db from '../db.js';
+import { jest } from '@jest/globals';
 
 // Mock the mysql2/promise module
-jest.mock('mysql2/promise', () => ({
-    createPool: jest.fn(() => ({
-        getConnection: jest.fn()
+jest.unstable_mockModule('pg', () => ({
+    Pool: jest.fn(() => ({
+        query: jest.fn(),
+        connect: jest.fn()
     }))
 }));
+
+const { default: db } = await import('../db.js');
 
 describe('Database Module', () => {
     afterEach(() => {
@@ -13,7 +16,7 @@ describe('Database Module', () => {
     });
 
     test('should export pool, getConnection, and query methods', () => {
-        expect(typeof db.getConnection).toBe('function');
+        expect(typeof db.getClient).toBe('function');
         expect(typeof db.query).toBe('function');
         expect(db.pool).toBeDefined();
     });
@@ -22,7 +25,7 @@ describe('Database Module', () => {
         test('should return a connection object', async () => {
             // This is a basic smoke test
             // In production, use a test database
-            expect(typeof db.getConnection).toBe('function');
+            expect(typeof db.getClient).toBe('function');
         });
     });
 

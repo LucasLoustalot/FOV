@@ -1,9 +1,15 @@
 import express from 'express';
 import request from 'supertest';
-import db from '../db.js';
+import { jest } from '@jest/globals';
 
 // Mock the database module
-jest.mock('../db.js');
+jest.unstable_mockModule('../db.js', () => ({
+    default: {
+        query: jest.fn()
+    }
+}));
+
+const { default: db } = await import('../db.js');
 
 // Mock router - simplified version of categories endpoint
 const categoriesRouter = express.Router();
@@ -40,7 +46,7 @@ describe('Categories Routes', () => {
         app = express();
         app.use(express.json());
         app.use('/', categoriesRouter);
-        app.use((err, req, res) => {
+        app.use((err, req, res, _next) => {
             res.status(500).json({ error: err.message });
         });
         jest.clearAllMocks();

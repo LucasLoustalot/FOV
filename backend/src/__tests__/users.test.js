@@ -1,10 +1,16 @@
 import express from 'express';
 import request from 'supertest';
-import usersRouter from '../routes/users.js';
-import db from '../db.js';
+import { jest } from '@jest/globals';
 
 // Mock the database module
-jest.mock('../db.js');
+jest.unstable_mockModule('../db.js', () => ({
+    default: {
+        query: jest.fn()
+    }
+}));
+
+const { default: usersRouter } = await import('../routes/users.js');
+const { default: db } = await import('../db.js');
 
 describe('Users Routes', () => {
     let app;
@@ -33,7 +39,7 @@ describe('Users Routes', () => {
             expect(response.body.data).toEqual(mockUser);
             expect(db.query).toHaveBeenCalledWith(
                 'SELECT id, username, display_name, created_at FROM users WHERE id = ?',
-                [1]
+                ['1']
             );
         });
 
