@@ -104,7 +104,7 @@ docker-compose up --build
 # Services will be available at:
 # - Frontend: http://localhost:4200
 # - Backend API: http://localhost:4000
-# - MySQL: localhost:3306
+# - Postgres: localhost:5432
 ```
 
 ### Option 2: Manual Setup

@@ -292,13 +292,13 @@ The project includes automated testing and linting on push/PR:
 ### Database Connection Failed
 
 ```
-Unable to connect to DB Error: ECONNREFUSED 127.0.0.1:3306
+Unable to connect to DB Error: ECONNREFUSED 127.0.0.1:5432
 ```
 
 **Solutions:**
-1. Verify MySQL is running: `mysql -u admin -p`
-2. Check `.env` credentials match your MySQL setup
-3. Ensure database exists: `CREATE DATABASE fovwebdb;`
+1. Verify Postgres is running
+2. Check `.env` credentials match your Postgres setup
+3. Ensure database fovwebdb exists
 
 ### Port Already in Use
 

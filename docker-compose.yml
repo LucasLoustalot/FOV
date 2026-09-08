@@ -19,7 +19,7 @@ services:
     environment:
       - PORT=4000
       - DB_HOST=fov-db
-      - DB_PORT=3306
+      - DB_PORT=5432
       - DB_USER=root
       - SRT_PORT=9999
       - DB_PASSWORD=${DB_PASSWORD}
@@ -50,25 +50,26 @@ services:
       - frontend
 
   fov-db:
-    image: mysql:lts
+    image: postgres:18
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - fov-db:/var/lib/mysql
-      - ./fovwebdb.sql:/docker-entrypoint-initdb.d/schema.sql
+      - fov-db:/var/lib/postgresql
+      - ./fovwebdb.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - backend
 
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}" ]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U root -d fovwebdb"]
+      interval: 10s
       timeout: 5s
       retries: 10
 
     environment:
-      MYSQL_DATABASE: fovwebdb
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: fovwebdb
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
 
 networks:
   frontend:

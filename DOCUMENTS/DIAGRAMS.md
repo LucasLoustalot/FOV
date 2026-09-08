@@ -48,8 +48,8 @@ Visual representations of the FOV Backend system architecture and workflows.
      ├──────────────────────────────┬───────────────────────────────┐
      ▼                              ▼                               ▼
 ┌─────────────────┐    ┌────────────────────────┐    ┌──────────────────┐
-│  MySQL Database │    │  Media Server (SRT)    │    │  File System     │
-│  (Port 3306)    │    │  (Port 9999)           │    │  (/media/hls)    │
+│  Postgres Db    │    │  Media Server (SRT)    │    │  File System     │
+│  (Port 5432)    │    │  (Port 9999)           │    │  (/media/hls)    │
 ├─────────────────┤    ├────────────────────────┤    ├──────────────────┤
 │ Connection Pool │    │  ├─ SRT Ingest        │    │ ├─ Segments      │
 │ ├─ users        │    │  ├─ FFmpeg Trans.    │    │ ├─ Playlists     │

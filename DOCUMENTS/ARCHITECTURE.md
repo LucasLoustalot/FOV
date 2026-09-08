@@ -26,8 +26,8 @@ The FOV Backend is a **modular Express.js REST API** with media streaming capabi
        ┌───────┴────────┐
        │                │
 ┌──────▼─────┐   ┌──────▼─────────┐
-│ MySQL Pool │   │ Media Server    │
-│ (Port 3306)│   │ SRT/HLS        │
+│ Postgres   │   │ Media Server    │
+│ (Port 5432)│   │ SRT/HLS        │
 │            │   │ (Port 9999)     │
 └────────────┘   └─────────────────┘
        │                │

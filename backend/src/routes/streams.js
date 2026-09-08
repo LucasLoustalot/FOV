@@ -3,11 +3,13 @@ const router = express.Router();
 import db from '../db.js';
 import fs from 'fs';
 import path from 'path';
+import { ffmpegProcesses } from '../mediaServer.mjs';
+import { resolveTrackIsVideo, sortTrackIds } from '../streamTrackUtils.js';
 
 const MEDIA_ROOT = process.env.MEDIA_ROOT || path.join(process.cwd(), 'media');
 const HLS_DIR = path.join(MEDIA_ROOT, 'hls');
 
-function isPlaylistReady(playlistPath, minSegments = 2) {
+/*function isPlaylistReady(playlistPath, minSegments = 2) {
     try {
         if (!fs.existsSync(playlistPath)) {
             return false;
@@ -29,9 +31,9 @@ function isPlaylistReady(playlistPath, minSegments = 2) {
         console.error(`Error checking playlist ${playlistPath}:`, err.message);
         return false;
     }
-}
+}*/
 
-function getSegmentCount(playlistPath) {
+/*function getSegmentCount(playlistPath) {
     try {
         if (!fs.existsSync(playlistPath)) {
             return 0;
@@ -42,9 +44,9 @@ function getSegmentCount(playlistPath) {
     } catch (err) {
         return 0;
     }
-}
+}*/
 
-function getCurrentTracksState(protocol = 'http') {
+/*function getCurrentTracksState(protocol = 'http') {
     try {
         if (!fs.existsSync(HLS_DIR)) {
             return {
@@ -127,6 +129,57 @@ function getCurrentTracksState(protocol = 'http') {
             message: 'Error reading tracks'
         };
     }
+}*/
+
+async function buildTracks(streamId, trackDirs, url) {
+    const sortedTrackIds = sortTrackIds(trackDirs);
+    const tracks = [];
+
+    for (const trackId of sortedTrackIds) {
+        const trackPath = path.join(HLS_DIR, streamId, trackId);
+        const isVideo = await resolveTrackIsVideo(streamId, trackId, trackPath, {
+            hlsDir: HLS_DIR,
+            ffmpegProcesses
+        });
+
+        tracks.push({
+            trackId,
+            videoUrl: `${url}/api/hls/${streamId}/${trackId}/playlist.m3u8`,
+            isVideo
+        });
+    }
+
+    return tracks;
+}
+
+function isNumericStreamId(streamId) {
+    return /^\d+$/.test(streamId);
+}
+
+async function fetchStreamInfo(streamId) {
+    if (!isNumericStreamId(streamId)) {
+        return null;
+    }
+
+    const dbRows = await db.query(
+        'SELECT s.id, s.title, s.viewers, s.avatar_url, s.thumbnail_url, c.name as category FROM streams s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?',
+        [streamId]
+    );
+
+    return dbRows.length > 0 ? dbRows[0] : null;
+}
+
+function buildStreamEntry(streamId, tracks, streamInfo) {
+    return {
+        streamId,
+        trackCount: tracks.length,
+        tracks,
+        title: streamInfo?.title || '',
+        category: streamInfo?.category || '',
+        viewers: streamInfo?.viewers || 0,
+        avatarUrl: streamInfo?.avatar_url || '',
+        thumbnailUrl: streamInfo?.thumbnail_url || ''
+    };
 }
 
 router.get('/', async (req, res, next) => {
@@ -161,57 +214,24 @@ router.get('/available', async (req, res, next) => {
         // For each stream, get database info and HLS tracks
         for (const streamId of streamDirs) {
             try {
-                // Get stream info from database
-                const dbRows = await db.query(
-                    'SELECT s.id, s.title, s.viewers, s.avatar_url, s.thumbnail_url, c.name as category FROM streams s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?',
-                    [streamId]
-                );
-
-                const streamInfo = dbRows[0] && dbRows[0].length > 0 ? dbRows[0][0] : null;
+                const streamInfo = await fetchStreamInfo(streamId);
 
                 const streamPath = path.join(HLS_DIR, streamId);
                 const trackDirs = fs.readdirSync(streamPath, { withFileTypes: true })
                     .filter(dirent => dirent.isDirectory())
                     .map(dirent => dirent.name);
 
-                const tracks = trackDirs.map((trackId) => ({
-                    trackId,
-                    videoUrl: `${url}/api/hls/${streamId}/${trackId}/playlist.m3u8`
-                }));
-
-                streams.push({
-                    streamId,
-                    trackCount: tracks.length,
-                    tracks,
-                    title: streamInfo?.title || '',
-                    category: streamInfo?.category || '',
-                    viewers: streamInfo?.viewers || 0,
-                    avatarUrl: streamInfo?.avatar_url || '',
-                    thumbnailUrl: streamInfo?.thumbnail_url || ''
-                });
+                const tracks = await buildTracks(streamId, trackDirs, url);
+                streams.push(buildStreamEntry(streamId, tracks, streamInfo));
             } catch (err) {
                 console.error(`Error processing stream ${streamId}: `, err);
-                // Still include the stream with empty fields if DB query fails
                 const streamPath = path.join(HLS_DIR, streamId);
                 const trackDirs = fs.readdirSync(streamPath, { withFileTypes: true })
                     .filter(dirent => dirent.isDirectory())
                     .map(dirent => dirent.name);
 
-                const tracks = trackDirs.map((trackId) => ({
-                    trackId,
-                    videoUrl: `${url}/api/hls/${streamId}/${trackId}/playlist.m3u8`
-                }));
-
-                streams.push({
-                    streamId,
-                    trackCount: tracks.length,
-                    tracks,
-                    title: '',
-                    category: '',
-                    viewers: 0,
-                    avatarUrl: '',
-                    thumbnailUrl: ''
-                });
+                const tracks = await buildTracks(streamId, trackDirs, url);
+                streams.push(buildStreamEntry(streamId, tracks, null));
             }
         }
 
