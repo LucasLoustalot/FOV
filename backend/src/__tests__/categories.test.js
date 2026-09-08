@@ -2,7 +2,6 @@ import express from 'express';
 import request from 'supertest';
 import { jest } from '@jest/globals';
 
-// Mock the database module
 jest.unstable_mockModule('../db.js', () => ({
     default: {
         query: jest.fn()
@@ -10,34 +9,7 @@ jest.unstable_mockModule('../db.js', () => ({
 }));
 
 const { default: db } = await import('../db.js');
-
-// Mock router - simplified version of categories endpoint
-const categoriesRouter = express.Router();
-
-categoriesRouter.get('/', async (req, res, next) => {
-    try {
-        const rows = await db.query('SELECT id, name, description FROM categories');
-        res.json({ data: rows });
-    } catch (err) {
-        next(err);
-    }
-});
-
-categoriesRouter.post('/', async (req, res, next) => {
-    const { name, description } = req.body;
-    if (!name) {
-        return res.status(400).json({ error: 'name required' });
-    }
-    try {
-        const result = await db.query(
-            'INSERT INTO categories (name, description) VALUES (?, ?)',
-            [name, description || null]
-        );
-        res.status(201).json({ id: result.insertId });
-    } catch (err) {
-        next(err);
-    }
-});
+const { default: categoriesRouter } = await import('../routes/categories.js');
 
 describe('Categories Routes', () => {
     let app;
@@ -53,30 +25,18 @@ describe('Categories Routes', () => {
     });
 
     describe('GET /', () => {
-        test('should return all categories', async () => {
-            const mockCategories = [
-                { id: 1, name: 'Gaming', description: 'Gaming streams' },
-                { id: 2, name: 'Music', description: 'Music streams' }
-            ];
+        test('returns the first category query result', async () => {
+            const mockCategories = [{ id: 1, name: 'Gaming', viewers: 100 }];
 
             db.query.mockResolvedValue(mockCategories);
 
             const response = await request(app).get('/');
 
             expect(response.status).toBe(200);
-            expect(response.body.data).toEqual(mockCategories);
+            expect(response.body).toEqual(mockCategories[0]);
             expect(db.query).toHaveBeenCalledWith(
-                'SELECT id, name, description FROM categories'
+                'SELECT id, name, viewers, image_url FROM categories ORDER BY viewers DESC'
             );
-        });
-
-        test('should return empty array when no categories', async () => {
-            db.query.mockResolvedValue([]);
-
-            const response = await request(app).get('/');
-
-            expect(response.status).toBe(200);
-            expect(response.body.data).toEqual([]);
         });
 
         test('should handle database errors', async () => {
@@ -89,59 +49,37 @@ describe('Categories Routes', () => {
         });
     });
 
-    describe('POST /', () => {
-        test('should create a new category', async () => {
-            const newCategory = {
-                name: 'Sports',
-                description: 'Sports streams'
-            };
+    describe('GET /:id', () => {
+        test('returns a category by id', async () => {
+            const category = { id: 7, name: 'Sports', viewers: 42 };
+            db.query.mockResolvedValue([category]);
 
-            db.query.mockResolvedValue({ insertId: 3 });
+            const response = await request(app).get('/7');
 
-            const response = await request(app)
-                .post('/')
-                .send(newCategory);
-
-            expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('id', 3);
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(category);
             expect(db.query).toHaveBeenCalledWith(
-                'INSERT INTO categories (name, description) VALUES (?, ?)',
-                ['Sports', 'Sports streams']
+                'SELECT id, name, viewers, image_url FROM categories WHERE id = ?',
+                ['7']
             );
         });
 
-        test('should create category without description', async () => {
-            db.query.mockResolvedValue({ insertId: 4 });
+        test('returns 404 when a category does not exist', async () => {
+            db.query.mockResolvedValue([]);
 
-            const response = await request(app)
-                .post('/')
-                .send({ name: 'Art' });
+            const response = await request(app).get('/999');
 
-            expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('id', 4);
-            expect(db.query).toHaveBeenCalledWith(
-                'INSERT INTO categories (name, description) VALUES (?, ?)',
-                ['Art', null]
-            );
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({ error: 'Categorie not found' });
         });
 
-        test('should return 400 when name is missing', async () => {
-            const response = await request(app)
-                .post('/')
-                .send({ description: 'No name provided' });
+        test('forwards database errors', async () => {
+            db.query.mockRejectedValue(new Error('Database connection failed'));
 
-            expect(response.status).toBe(400);
-            expect(response.body).toHaveProperty('error', 'name required');
-        });
-
-        test('should handle duplicate category error', async () => {
-            db.query.mockRejectedValue(new Error('Duplicate entry for key name'));
-
-            const response = await request(app)
-                .post('/')
-                .send({ name: 'Gaming' });
+            const response = await request(app).get('/7');
 
             expect(response.status).toBe(500);
+            expect(response.body).toEqual({ error: 'Database connection failed' });
         });
     });
 });
