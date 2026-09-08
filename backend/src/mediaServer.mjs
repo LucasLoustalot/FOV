@@ -534,4 +534,4 @@ async function startMediaServer() {
     });
 }
 
-export { createMediaRoutes, startMediaServer, ffmpegProcesses, killFFmpegProcess };
+export { createMediaRoutes, startMediaServer, ffmpegProcesses, killFFmpegProcess, clearHLSFiles };

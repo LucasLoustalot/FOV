@@ -8,7 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 
 import db from './db.js';
 import apiRoutes from './routes/index.js';
-import { createMediaRoutes, startMediaServer } from './mediaServer.mjs';
+import { createMediaRoutes, startMediaServer, clearHLSFiles } from './mediaServer.mjs';
 import swaggerDocument from './swagger.js';
 
 const PORT = process.env.PORT || 4000;
@@ -40,7 +40,9 @@ async function start() {
     try {
         // verify PostgreSQL connection
         await db.query('SELECT 1');
-        console.log('✅ Connected to BDD');
+        console.log('✅ Connected to BDD');1
+        // Clear HLS files on server start
+        clearHLSFiles();
 
         // initialize media server
         await startMediaServer(app);
