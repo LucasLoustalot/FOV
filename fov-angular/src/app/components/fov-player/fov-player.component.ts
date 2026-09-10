@@ -299,9 +299,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleArrayApiFormat(streams: any[]) {
-    const stream = streams.find(
-      (s) => s.streamId === this.streamId && (s.trackCount ?? 0) > 0,
-    );
+    const stream = streams.find((s) => s.streamId === this.streamId);
 
     if (stream && stream.tracks && stream.tracks.length > 0) {
       this.stopPolling();
@@ -322,9 +320,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleNewApiFormat(response: ApiAvailableStreamsResponse) {
-    const stream = response.streams.find(
-      (s) => s.streamId === this.streamId && (s.trackCount ?? 0) > 0,
-    );
+    const stream = response.streams.find((s) => s.streamId === this.streamId);
 
     if (stream && stream.tracks.length > 0) {
       this.stopPolling();
