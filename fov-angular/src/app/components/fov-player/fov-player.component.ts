@@ -16,6 +16,7 @@ export interface Track {
   videoUrl: string;
   /** true = video track (with paired audio when available); false = audio-only */
   isVideo: boolean;
+  hasAudio: boolean;
 }
 
 export interface VideoWrapper {
@@ -36,6 +37,7 @@ export interface VideoWrapper {
   bufferEnd: number;
   bufferStart: number;
   isVideo: boolean;
+  hasAudio: boolean;
 }
 
 interface ApiTracksResponse {
@@ -52,6 +54,7 @@ interface ApiStreamTrack {
   videoUrl: string;
   /** true = video track (with paired audio when available); false = audio-only */
   isVideo?: boolean;
+  hasAudio: boolean;
 }
 
 interface ApiLiveStream {
@@ -299,7 +302,9 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleArrayApiFormat(streams: any[]) {
-    const stream = streams.find((s) => s.streamId === this.streamId);
+    const stream = streams.find(
+      (s) => s.streamId === this.streamId && (s.trackCount ?? 0) > 0,
+    );
 
     if (stream && stream.tracks && stream.tracks.length > 0) {
       this.stopPolling();
@@ -308,6 +313,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
         name: t.trackId,
         videoUrl: t.videoUrl,
         isVideo: t.isVideo ?? true,
+        hasAudio: t.hasAudio ?? !(t.isVideo ?? true),
       }));
       console.log(
         `[loadTracks] Stream "${this.streamId}" found with ${this.availableTracks.length} tracks`,
@@ -320,7 +326,9 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleNewApiFormat(response: ApiAvailableStreamsResponse) {
-    const stream = response.streams.find((s) => s.streamId === this.streamId);
+    const stream = response.streams.find(
+      (s) => s.streamId === this.streamId && (s.trackCount ?? 0) > 0,
+    );
 
     if (stream && stream.tracks.length > 0) {
       this.stopPolling();
@@ -329,6 +337,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
         name: t.trackId,
         videoUrl: t.videoUrl,
         isVideo: t.isVideo ?? true,
+        hasAudio: t.hasAudio ?? !(t.isVideo ?? true),
       }));
       console.log(
         `[loadTracks] Stream "${this.streamId}" found with ${this.availableTracks.length} tracks`,
@@ -348,7 +357,10 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
 
     if (allReady && response.tracks && response.tracks.length > 0) {
       this.stopPolling();
-      this.availableTracks = response.tracks;
+      this.availableTracks = response.tracks.map((t) => ({
+        ...t,
+        hasAudio: (t as any).hasAudio ?? !(t.isVideo ?? true),
+      }));
       this.initializeAllTracks();
       this.isLoading = false;
     } else {
@@ -500,6 +512,7 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
       bufferEnd: 0,
       bufferStart: 0,
       isVideo: track.isVideo,
+      hasAudio: track.hasAudio,
     };
 
     this.videoWrappers.push(newWrapper);
@@ -509,6 +522,10 @@ export class FovPlayerComponent implements AfterViewInit, OnDestroy {
       this.refreshLayoutState();
       this.adaptWrappersToViewport();
     }, 100);
+  }
+
+  hasAnyAudio(): boolean {
+    return this.videoWrappers.some(w => w.hasAudio);
   }
 
   removeTrack(wrapper: VideoWrapper) {

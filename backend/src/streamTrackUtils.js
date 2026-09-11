@@ -91,6 +91,65 @@ async function probeTrackHasVideo(trackDir) {
     }
 }
 
+async function probeTrackStreams(trackDir) {
+    const segmentPath = findFirstSegment(trackDir);
+    if (!segmentPath) {
+        return { hasVideo: false, hasAudio: false };
+    }
+
+    try {
+        const { stdout } = await execFileAsync(getFfprobePath(), [
+            '-v', 'error',
+            '-show_entries', 'stream=codec_type',
+            '-of', 'csv=p=0',
+            segmentPath
+        ]);
+        const lines = stdout
+            .trim()
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean);
+        return {
+            hasVideo: lines.includes('video'),
+            hasAudio: lines.includes('audio'),
+        };
+    } catch (err) {
+        console.error(`Error probing track streams at ${trackDir}:`, err.message);
+        return { hasVideo: false, hasAudio: false };
+    }
+}
+
+async function resolveTrackInfo(streamId, trackId, trackPath, options = {}) {
+    const { hlsDir = DEFAULT_HLS_DIR, ffmpegProcesses = null } = options;
+    const variantIndex = parseInt(trackId, 10);
+
+    if (Number.isFinite(variantIndex)) {
+        let tracksV = null;
+        const meta = readStreamMeta(streamId, hlsDir);
+        if (meta) {
+            tracksV = meta.tracksV;
+        } else {
+            const liveData = ffmpegProcesses?.get(streamId);
+            if (liveData?.tracksV != null) {
+                tracksV = liveData.tracksV;
+            }
+        }
+
+        if (tracksV != null) {
+            const isVideo = isVideoVariant(variantIndex, tracksV);
+            if (!isVideo) {
+                // Piste audio pure : toujours de l'audio, jamais de vidéo
+                return { isVideo: false, hasAudio: true };
+            }
+            // Piste vidéo : il faut sonder pour savoir si elle contient de l'audio
+            const { hasAudio } = await probeTrackStreams(trackPath);
+            return { isVideo: true, hasAudio };
+        }
+    }
+
+    return await probeTrackStreams(trackPath);
+}
+
 async function resolveTrackIsVideo(streamId, trackId, trackPath, options = {}) {
     const { hlsDir = DEFAULT_HLS_DIR, ffmpegProcesses = null } = options;
     const variantIndex = parseInt(trackId, 10);
@@ -119,7 +178,9 @@ export {
     readStreamMeta,
     writeStreamMeta,
     probeTrackHasVideo,
+    probeTrackStreams,
     resolveTrackIsVideo,
+    resolveTrackInfo,
     sortTrackIds,
     findFirstSegment,
     getFfprobePath

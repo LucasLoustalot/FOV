@@ -4,7 +4,7 @@ import db from '../db.js';
 import fs from 'fs';
 import path from 'path';
 import { ffmpegProcesses } from '../mediaServer.mjs';
-import { resolveTrackIsVideo, sortTrackIds } from '../streamTrackUtils.js';
+import { resolveTrackInfo, sortTrackIds } from '../streamTrackUtils.js';
 
 const MEDIA_ROOT = process.env.MEDIA_ROOT || path.join(process.cwd(), 'media');
 const HLS_DIR = path.join(MEDIA_ROOT, 'hls');
@@ -137,7 +137,7 @@ async function buildTracks(streamId, trackDirs, url) {
 
     for (const trackId of sortedTrackIds) {
         const trackPath = path.join(HLS_DIR, streamId, trackId);
-        const isVideo = await resolveTrackIsVideo(streamId, trackId, trackPath, {
+        const { isVideo, hasAudio } = await resolveTrackInfo(streamId, trackId, trackPath, {
             hlsDir: HLS_DIR,
             ffmpegProcesses
         });
@@ -145,7 +145,8 @@ async function buildTracks(streamId, trackDirs, url) {
         tracks.push({
             trackId,
             videoUrl: `${url}/api/hls/${streamId}/${trackId}/playlist.m3u8`,
-            isVideo
+            isVideo,
+            hasAudio,
         });
     }
 
